@@ -8,6 +8,7 @@ import { AuthShell } from "@/components/auth-shell";
 export default async function AdminProfilePage() {
   const session = await getSession();
   if (!session || session.role !== "admin") redirect("/admin/sign-in");
+  if (session.mustChangePassword) redirect("/admin/change-password");
   const [profile] = await createIdentityDb().select().from(users).leftJoin(adminProfiles, eq(adminProfiles.userId, users.id)).where(eq(users.id, session.userId)).limit(1);
   if (!profile) redirect("/admin/sign-in");
   const admin = profile.admin_profiles;

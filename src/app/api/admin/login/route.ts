@@ -27,7 +27,7 @@ export async function POST(request: Request) {
       const sessionToken = createOpaqueToken();
       await db.insert(sessions).values({ userId: record.user.id, tokenHash: hashOpaqueToken(sessionToken), expiresAt: new Date(Date.now() + SESSION_MAX_AGE_SECONDS * 1000) });
       await recordAudit(db, { actorUserId: record.user.id, action: "admin.login.trusted_device", ipAddress: requestIp(request) });
-      const response = NextResponse.redirect(new URL("/admin", request.url), 303); response.cookies.set(sessionCookie(sessionToken)); return response;
+      const response = NextResponse.redirect(new URL(record.user.mustChangePassword ? "/admin/change-password" : "/admin", request.url), 303); response.cookies.set(sessionCookie(sessionToken)); return response;
     }
   }
   await db.update(mfaChallenges).set({ invalidatedAt: new Date() }).where(and(eq(mfaChallenges.userId, record.user.id), isNull(mfaChallenges.usedAt), isNull(mfaChallenges.invalidatedAt)));

@@ -5,6 +5,7 @@ import { createContentDb } from "@/db/content/client";
 import { episodes, mediaVariants } from "@/db/content/schema";
 import { SESSION_COOKIE_NAME, getSessionFromToken } from "@/features/auth/session";
 import { resolveEpisodeAccess } from "@/features/media/access";
+import { readableBlobStatus } from "@/features/media/blob-response";
 
 export async function GET(request: NextRequest, context: RouteContext<"/api/media/[id]">) {
   const { id } = await context.params; const db = createContentDb();
@@ -16,10 +17,10 @@ export async function GET(request: NextRequest, context: RouteContext<"/api/medi
   const wantsDownload = request.nextUrl.searchParams.get("download") === "1";
   if (wantsDownload && !session) return Response.json({ error: "Sign in to download episodes." }, { status: 401 });
   const range = request.headers.get("range"); const blob = await get(record.media.objectKey, { access: "private", headers: range ? { Range: range } : undefined });
-  if (!blob || blob.statusCode !== 200 || !blob.stream) return new Response("Media not found", { status: 404 });
+  if (!blob || !readableBlobStatus(blob.statusCode) || !blob.stream) return new Response("Media not found", { status: 404 });
   const headers = new Headers(); blob.headers.forEach((value, key) => headers.set(key, value)); headers.set("Content-Type", record.media.mimeType); headers.set("Accept-Ranges", "bytes"); headers.set("Cache-Control", "private, no-store");
   if (wantsDownload) headers.set("Content-Disposition", `attachment; filename="${safeFilename(record.media.originalFilename ?? `${record.episode.slug}.${extensionFor(record.media.mimeType)}`)}"`);
-  return new Response(blob.stream, { status: range ? 206 : 200, headers });
+  return new Response(blob.stream, { status: blob.statusCode, headers });
 }
 
 function extensionFor(mimeType: string) { if (mimeType === "video/mp4") return "mp4"; if (mimeType === "audio/mpeg") return "mp3"; if (mimeType === "audio/mp4") return "m4a"; return "bin"; }

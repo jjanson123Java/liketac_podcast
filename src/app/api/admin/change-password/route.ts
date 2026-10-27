@@ -10,7 +10,7 @@ import { requestIp } from "@/features/auth/rate-limit";
 import { sessionCookie } from "@/features/auth/session";
 
 export async function POST(request: Request) {
-  let admin; try { admin = await requireAdmin(); } catch { return NextResponse.json({ error: "Administrator authentication required." }, { status: 401 }); }
+  let admin; try { admin = await requireAdmin({ allowPasswordChange: true }); } catch { return NextResponse.json({ error: "Administrator authentication required." }, { status: 401 }); }
   const form = await request.formData(); const password = String(form.get("password") ?? "");
   if (password !== form.get("confirmPassword") || validatePassword(password).length) return NextResponse.json({ error: "The passwords must match and meet every requirement." }, { status: 400 });
   const db = createIdentityDb(); const history = await db.select({ passwordHash: passwordHistory.passwordHash }).from(passwordHistory).where(eq(passwordHistory.userId, admin.userId)).orderBy(asc(passwordHistory.position)).limit(5);

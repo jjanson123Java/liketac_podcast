@@ -15,7 +15,7 @@ Only resource names and IDs belong in source control. Secrets remain in Vercel e
 
 ## Required environment keys
 
-`IDENTITY_DATABASE_URL`, `CONTENT_DATABASE_URL`, `BLOB_READ_WRITE_TOKEN`, `RESEND_API_KEY`, `EMAIL_FROM`, `ADMIN_USERNAME`, `ADMIN_SECURITY_EMAIL`, `ADMIN_BOOTSTRAP_PASSWORD`, and `NEXT_PUBLIC_SITE_URL`.
+Runtime requires `IDENTITY_DATABASE_URL`, `CONTENT_DATABASE_URL`, `BLOB_READ_WRITE_TOKEN`, `RESEND_API_KEY`, `EMAIL_FROM`, `ADMIN_USERNAME`, `ADMIN_SECURITY_EMAIL`, and `NEXT_PUBLIC_SITE_URL`. `ADMIN_BOOTSTRAP_PASSWORD` is a one-time initialization secret: add it only while running the administrator bootstrap, then remove it from every Vercel environment after the permanent password is set.
 
 ## Release sequence
 
