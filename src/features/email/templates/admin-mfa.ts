@@ -1,0 +1,3 @@
+export function adminMfaEmail(code: string) {
+  return { subject: "Your Like TAC administrator verification code", text: `Your Like TAC administrator verification code is ${code}. It expires in 10 minutes. Never share this code. If you did not attempt to sign in, change your administrator password immediately.`, html: `<h1>Administrator verification</h1><p>Your six-digit code is:</p><p style="font-size:32px;font-weight:900;letter-spacing:8px">${code}</p><p>This code expires in 10 minutes. Never share it.</p><p>If you did not attempt to sign in, change your administrator password immediately.</p>` };
+}

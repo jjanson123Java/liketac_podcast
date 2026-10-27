@@ -1,0 +1,40 @@
+{
+  "name": "like-tac-live",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:smoke": "playwright test --config=playwright.smoke.config.ts",
+    "db:migrate:identity": "drizzle-kit migrate --config=drizzle.identity.config.ts",
+    "db:migrate:content": "drizzle-kit migrate --config=drizzle.content.config.ts",
+    "db:bootstrap-admin": "tsx scripts/bootstrap-admin.ts",
+    "db:seed-content": "tsx scripts/seed-content.ts"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^1.2.0",
+    "@vercel/blob": "2.4.0",
+    "drizzle-orm": "^0.45.4",
+    "next": "latest",
+    "react": "latest",
+    "react-dom": "latest"
+  },
+  "devDependencies": {
+    "@playwright/test": "latest",
+    "@testing-library/jest-dom": "latest",
+    "@testing-library/react": "latest",
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "drizzle-kit": "^0.31.11",
+    "jsdom": "^26.1.0",
+    "tsx": "^4.23.15",
+    "typescript": "latest",
+    "vitest": "latest"
+  }
+}

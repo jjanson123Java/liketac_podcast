@@ -1,0 +1,1 @@
+ALTER TABLE "password_history" ADD CONSTRAINT "password_history_position_check" CHECK ("password_history"."position" between 1 and 5);
