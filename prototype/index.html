@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Like TAC podcast prototype — serious tech, zero stiffness.">
+  <title>Like TAC Podcast</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <a class="brand" href="#home" aria-label="Like TAC home"><img src="assets/liketac-logo.png" alt=""><span class="brand-word"><b>Like</b>TAC</span></a>
+    <button class="mobile-menu" id="mobile-menu" aria-expanded="false" aria-controls="nav">Menu</button>
+    <nav id="nav" aria-label="Primary navigation">
+      <a href="#browse">Browse Shows</a>
+      <a href="#audience">Who It’s For</a>
+      <a href="#help">Help</a>
+      <button class="button button-quiet" id="theme-toggle">Dark mode</button>
+      <button class="button button-outline" id="signin-button" data-route="login">Sign In</button>
+      <button class="button button-primary" id="signup-button" data-route="signup">Sign Up Free</button>
+      <button class="button button-outline hidden" id="signout-button">Sign Out</button>
+    </nav>
+  </header>
+
+  <main id="main" tabindex="-1"></main>
+  <footer><div><strong>Like TAC</strong><span>Serious tech. For the rest of us.</span></div><div><a href="#help">Help</a><a href="#privacy">Privacy</a><span>Prototype for liketac.live</span></div></footer>
+
+  <dialog id="teaser-dialog" class="dialog">
+    <button class="dialog-close" data-close aria-label="Close teaser">×</button>
+    <div class="teaser-screen"><span class="teaser-time">0:45</span><span>Illustrative muted teaser loop</span></div>
+    <h2 id="teaser-title">Episode teaser</h2>
+    <p>Sign up free or sign in to watch the complete episode and download it.</p>
+    <div class="button-row"><button class="button button-outline" id="teaser-mute">Unmute</button><button class="button button-primary" data-route="signup">Watch Full Episode</button></div>
+  </dialog>
+
+  <dialog id="player-dialog" class="dialog player-dialog">
+    <button class="dialog-close" data-close aria-label="Close player">×</button>
+    <div id="player-stage" class="player-stage">
+      <div class="player-visual"><span class="mic">🎙️</span><span id="player-status">Podcast playback simulation</span></div>
+      <div class="player-controls">
+        <button class="button button-primary" id="player-pause">Pause</button>
+        <button class="button button-outline" id="player-audio">Mute</button>
+        <button class="button button-outline" id="player-fullscreen">Full Screen</button>
+      </div>
+    </div>
+    <h2 id="player-title">Episode title</h2>
+    <p>Production media controls will include volume, progress, captions, and full-screen playback. Press <strong>Esc</strong> to leave full screen.</p>
+  </dialog>
+
+  <dialog id="mfa-dialog" class="dialog mfa-dialog">
+    <div class="mfa-banner"><span class="mfa-icon">✉</span><h2>Check your email</h2><p>We sent a six-digit code to the email in your protected admin profile.</p></div>
+    <form id="mfa-form" class="dialog-body">
+      <label for="mfa-code">Six-digit verification code</label>
+      <input id="mfa-code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="000000" required>
+      <label class="check"><input id="trust-device" type="checkbox"><span>Trust this private device for 30 days.</span></label>
+      <button class="button button-primary button-wide">Verify and Open Admin</button>
+      <button class="text-button" type="button" id="resend-mfa">Resend code</button>
+      <p class="fine-print">The code expires in 10 minutes and works only once.</p>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
