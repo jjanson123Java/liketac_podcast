@@ -8,6 +8,7 @@ import {
   mfaChallenges,
   passwordHistory,
   passwordResetChallenges,
+  rateLimitBuckets,
   sessions,
   users,
 } from "./schema";
@@ -27,5 +28,6 @@ describe("identity database schema", () => {
     expect(getTableConfig(sessions).columns.map((column) => column.name)).toContain("revoked_at");
     expect(getTableConfig(adminProfiles).name).toBe("admin_profiles");
     expect(getTableConfig(auditEvents).name).toBe("audit_events");
+    expect(getTableConfig(rateLimitBuckets).columns.map((column) => column.name)).toEqual(expect.arrayContaining(["key_hash", "action", "window_started_at", "count"]));
   });
 });

@@ -15,6 +15,13 @@
       "when": 1793138316885,
       "tag": "0001_spotty_rawhide_kid",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793138806944,
+      "tag": "0002_sticky_psylocke",
+      "breakpoints": true
     }
   ]
 }

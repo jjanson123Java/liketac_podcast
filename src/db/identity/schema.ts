@@ -115,3 +115,12 @@ export const auditEvents = pgTable("audit_events", {
   ipAddress: text("ip_address"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+export const rateLimitBuckets = pgTable("rate_limit_buckets", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  keyHash: text("key_hash").notNull(),
+  action: text("action").notNull(),
+  windowStartedAt: timestamp("window_started_at", { withTimezone: true }).notNull(),
+  count: integer("count").notNull().default(1),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [uniqueIndex("rate_limit_key_action_idx").on(table.keyHash, table.action)]);
