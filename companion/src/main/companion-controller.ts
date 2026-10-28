@@ -64,6 +64,7 @@ export class CompanionController {
   }
 
   async startRecording() {
+    await this.refresh("connected");
     if (this.current.connection !== "connected") throw new Error("Connect to OBS before recording.");
     if (this.current.profile !== "LikeTACLive") throw new Error("Select the LikeTACLive OBS profile before recording.");
     if (this.current.sceneCollection !== "LikeTACLive Studio") throw new Error("Select the LikeTACLive Studio scene collection before recording.");

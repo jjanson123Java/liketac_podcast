@@ -27,7 +27,7 @@ describe("OBSClient", () => {
     const raw = transport();
     const client = new OBSClient(raw);
     await client.connect({ host: "127.0.0.1", port: 4455, password: "secret" });
-    expect(raw.connect).toHaveBeenCalledWith("ws://127.0.0.1:4455", "secret", { rpcVersion: 1 });
+    expect(raw.connect).toHaveBeenCalledWith("ws://127.0.0.1:4455", "secret", expect.objectContaining({ rpcVersion: 1, eventSubscriptions: expect.any(Number) }));
     await expect(client.getSnapshot()).resolves.toMatchObject({
       obsVersion: "33.0.0", profile: "LikeTACLive", sceneCollection: "LikeTACLive Studio",
       programScene: "00 - Standby", recording: false, streaming: false,
@@ -53,10 +53,14 @@ describe("OBSClient", () => {
     raw.call.mockImplementation(async (request: string, data?: Record<string, unknown>) => {
       if (request === "GetSceneList") return { scenes: [{ sceneName: "00 - Standby" }, { sceneName: "10 - Host Only" }] };
       if (request === "GetInputList") return { inputs: [{ inputName: "LCS_MIC_Host_Primary" }, { inputName: "CAM_Host_Primary" }] };
+      if (request === "GetSceneItemList") return { sceneItems: data?.sceneName === "10 - Host Only" ? [{ sourceName: "LCS_MIC_Host_Primary", sceneItemEnabled: true }, { sourceName: "CAM_Host_Primary", sceneItemEnabled: true }] : [] };
       if (request === "GetSourceActive") return { videoActive: data?.sourceName === "CAM_Host_Primary", videoShowing: true };
       if (request === "GetInputMute") return { inputMuted: false };
       if (request === "GetSourceScreenshot") return { imageData: "data:image/png;base64,preview" };
       return {};
+    });
+    raw.on.mockImplementation((event: string, listener: (value: unknown) => void) => {
+      if (event === "InputVolumeMeters") queueMicrotask(() => listener({ inputs: [{ inputName: "LCS_MIC_Host_Primary", inputLevelsMul: [[0.2, 0.1, 0.05]] }] }));
     });
     const result = await new OBSClient(raw).getReadiness();
     expect(result).toContainEqual({ id: "scene:50 - Host Presentation", label: "Scene: 50 - Host Presentation", ready: false, reason: "Required OBS scene is missing." });

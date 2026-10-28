@@ -34,6 +34,22 @@ describe("CompanionController", () => {
     expect(client.startRecord).not.toHaveBeenCalled();
   });
 
+  test("refreshes readiness immediately before starting a recording", async () => {
+    const getReadiness = vi.fn()
+      .mockResolvedValueOnce([{ id: "mic", label: "Microphone", ready: true, reason: null }])
+      .mockResolvedValueOnce([{ id: "mic", label: "Microphone", ready: false, reason: "No live microphone level was detected." }]);
+    const client = {
+      connect: vi.fn(), getReadiness,
+      getSnapshot: vi.fn(async () => ({ recording: false, streaming: false, availableScenes: [], obsVersion: "33", profile: "LikeTACLive", sceneCollection: "LikeTACLive Studio", programScene: "00 - Standby" })),
+      startRecord: vi.fn(), stopRecord: vi.fn(), setProgramScene: vi.fn(), subscribe: vi.fn(),
+    };
+    const controller = new CompanionController(client as any);
+    await controller.connect({ host: "127.0.0.1", port: 4455, password: "secret" });
+    await expect(controller.startRecording()).rejects.toThrow("No live microphone level was detected.");
+    expect(getReadiness).toHaveBeenCalledTimes(2);
+    expect(client.startRecord).not.toHaveBeenCalled();
+  });
+
   test("marks recording state unknown after a dropped connection and reconnects without starting recording", async () => {
     const client = {
       connect: vi.fn(async () => undefined),

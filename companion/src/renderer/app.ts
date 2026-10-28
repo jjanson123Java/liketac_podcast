@@ -28,7 +28,7 @@ export function renderCompanion(root: Element, status: CompanionStatus, now = ne
           <p class="check ${profileReady ? "good" : "bad"}">${profileReady ? "Profile ready" : "Required profile: LikeTACLive"}</p>
           <p class="check ${collectionReady ? "good" : "bad"}">${collectionReady ? "Scene collection ready" : "Required scene collection: LikeTACLive Studio"}</p>
         </section>
-        <section><h2>Devices and sources</h2>${checks.length ? checks.map((item) => `<div class="device ${item.ready ? "good" : "bad"}"><strong>${escapeHtml(item.label)}</strong><span>${item.ready ? "Ready" : escapeHtml(item.reason ?? "Check required")}</span></div>`).join("") : "<p>Run readiness checks after connecting.</p>"}</section>
+        <section><h2>Devices and sources</h2><button id="refresh-readiness" class="quiet">Run readiness checks</button>${checks.length ? checks.map((item) => `<div class="device ${item.ready ? "good" : "bad"}"><strong>${escapeHtml(item.label)}</strong><span>${item.ready ? "Ready" : escapeHtml(item.reason ?? "Check required")}</span></div>`).join("") : "<p>Connect to OBS, speak into the microphone, then run readiness checks.</p>"}</section>
         <button id="full-screen" class="quiet">Full screen</button>
       </aside>
       <main class="stage">
@@ -50,6 +50,7 @@ export function wireCompanion(root: Element, api: CompanionWindowAPI) {
     safely(api.connect(password));
   });
   root.querySelector("#full-screen")?.addEventListener("click", () => safely(api.setFullScreen(true)));
+  root.querySelector("#refresh-readiness")?.addEventListener("click", () => safely(api.refresh()));
   root.querySelector("#start-recording")?.addEventListener("click", () => safely(api.startRecording()));
   root.querySelector("#stop-recording")?.addEventListener("click", () => {
     if (window.confirm("Stop the current OBS recording?")) safely(api.stopRecording());

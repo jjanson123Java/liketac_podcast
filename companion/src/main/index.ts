@@ -1,7 +1,8 @@
 import { app, BrowserWindow, dialog, ipcMain, safeStorage } from "electron";
 import { access } from "node:fs/promises";
 import { join } from "node:path";
-import { spawn } from "node:child_process";
+import { execFile, spawn } from "node:child_process";
+import { promisify } from "node:util";
 import { pathToFileURL } from "node:url";
 import { CompanionApplication } from "./application";
 import { CompanionController } from "./companion-controller";
@@ -9,6 +10,7 @@ import { AssetReadinessService } from "./asset-readiness";
 import { CredentialStore } from "./credential-store";
 import { createOBSClient } from "./obs-client";
 import { OBSLauncher } from "./obs-launcher";
+import { WindowsDeviceProbe } from "./windows-device-probe";
 import { allowedRendererNavigation, parseCompanionLaunch, resolveCloseAction } from "./protocol";
 import type { ApprovedScene } from "../shared/contracts";
 
@@ -22,6 +24,9 @@ function broadcastStatus() {
 
 function registerHandlers() {
   ipcMain.handle("companion:get-status", () => service.status());
+  ipcMain.handle("companion:refresh", async () => {
+    try { return await service.refresh(); } finally { broadcastStatus(); }
+  });
   ipcMain.handle("companion:connect", async (_event, password: string) => {
     try { return await service.connect(password); } finally { broadcastStatus(); }
   });
@@ -101,16 +106,30 @@ else {
     }
     const client = createOBSClient();
     const assetReadiness = new AssetReadinessService();
+    const executeFile = promisify(execFile);
+    const windowsDevices = new WindowsDeviceProbe(async () => {
+      const { stdout } = await executeFile("powershell.exe", [
+        "-NoProfile", "-NonInteractive", "-Command",
+        "Get-PnpDevice -PresentOnly | Where-Object { $_.Class -in @('AudioEndpoint','Camera','Image','Monitor') } | Select-Object Class,FriendlyName,InstanceId | ConvertTo-Json -Compress",
+      ], { windowsHide: true, timeout: 10000 });
+      return stdout;
+    });
     const assetChecks = [
       ["liketac-banner-hd.png", "Like TAC banner", "ed5a5c0a58b0cb05e17f3df9285ae2681cd995274ab62259bb4e46200731e420"],
       ["like-tac-podcast-opener.mp4", "Opening reel", "48b1cb5343e07d19c7871cce4174487a40b0214fa2c23db1b740ed462e7237d1"],
       ["like-tac-podcast-opener-visual-only.mp4", "Visual-only opening reel", "5aa916f7ffc4e4618580a5f39e50a5897e736acb687665e8e5ae67875a28f41d"],
       ["like-tac-podcast-opener-original.wav", "Opening reel audio", "62281608b16d6705246b31f98b3360bc0d3034553c544b4e89f12bd8285eceb1"],
     ] as const;
-    const controller = new CompanionController(client, setTimeout, async () => Promise.all(assetChecks.map(async ([file, label, hash]) => {
-      const result = await assetReadiness.verify(join(__dirname, "../renderer/assets", file), hash);
-      return { id: `asset:${file}`, label, ...result };
-    })));
+    const controller = new CompanionController(client, setTimeout, async () => {
+      const [deviceChecks, mediaChecks] = await Promise.all([
+        windowsDevices.readiness(),
+        Promise.all(assetChecks.map(async ([file, label, hash]) => {
+          const result = await assetReadiness.verify(join(__dirname, "../renderer/assets", file), hash);
+          return { id: `asset:${file}`, label, ...result };
+        })),
+      ]);
+      return [...deviceChecks, ...mediaChecks];
+    });
     const credentials = new CredentialStore(join(app.getPath("userData"), "obs-credential.json"), {
       isEncryptionAvailable: () => safeStorage.isEncryptionAvailable(),
       encryptString: (value) => safeStorage.encryptString(value),
