@@ -18,6 +18,11 @@ The Browse Shows page uses the composed reel wherever a subject or listed episod
 finished recording. Replace that placeholder with the finished `intro + podcast + credits` media when
 the episode is published.
 
+Catalog previews have no native player controls. They begin muted and cycle through the 7-second opener,
+a 3-second excerpt at `0:17`, and a 3-second excerpt at `0:27` before returning to `0:00`. The catalog
+offers only Mute/Unmute, honors reduced-motion preferences, and uses teaser media for protected archive
+episodes. Opening an episode provides the normal media controls.
+
 ## Features
 
 - Free visitor access to Start Here and the current New Episode

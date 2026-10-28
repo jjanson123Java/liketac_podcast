@@ -1,7 +1,9 @@
-export function PodcastPlaceholder({ subject }: { subject: string }) {
+import { CatalogPreview } from "./catalog-preview";
+
+export function PodcastPlaceholder({ subject, catalogPreview = false }: { subject: string; catalogPreview?: boolean }) {
   return (
     <article className="podcastPlaceholder">
-      <video
+      {catalogPreview ? <CatalogPreview src="/media/podcast-opener/like-tac-podcast-opener.mp4" title={subject} hasPodcast={false} /> : <video
         aria-label={`${subject} podcast preview`}
         controls
         playsInline
@@ -9,7 +11,7 @@ export function PodcastPlaceholder({ subject }: { subject: string }) {
         src="/media/podcast-opener/like-tac-podcast-opener.mp4"
       >
         Your browser does not support the video player.
-      </video>
+      </video>}
       <div className="podcastPlaceholderCopy">
         <span className="tag">Preview reel</span>
         <h3>Podcast coming soon</h3>

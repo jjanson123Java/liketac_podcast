@@ -11,14 +11,16 @@ test("catalog groups episodes by subject and exposes free episode details", asyn
     "src",
     "/media/podcast-opener/like-tac-podcast-opener.mp4",
   );
-  await expect(page.getByLabel("Deploying and Configuring Expressway podcast preview")).toHaveAttribute(
+  await expect(page.getByLabel("Deploying and Configuring Expressway opening reel placeholder")).toHaveAttribute(
     "src",
     "/media/podcast-opener/like-tac-podcast-opener.mp4",
   );
-  await expect(page.getByLabel("Collaboration podcast preview")).toHaveAttribute(
+  await expect(page.getByLabel("Collaboration opening reel placeholder")).toHaveAttribute(
     "src",
     "/media/podcast-opener/like-tac-podcast-opener.mp4",
   );
+  await expect(page.getByRole("button", { name: "Unmute preview" }).first()).toBeVisible();
+  await expect(page.getByLabel("AI: useful coworker or confident liar? opening reel placeholder")).not.toHaveAttribute("controls");
 
   const episodeLink = page
     .getByRole("article")
@@ -34,4 +36,5 @@ test("catalog groups episodes by subject and exposes free episode details", asyn
     "src",
     "/media/podcast-opener/like-tac-podcast-opener.mp4",
   );
+  await expect(page.getByLabel("AI: useful coworker or confident liar? podcast preview")).toHaveAttribute("controls");
 });
