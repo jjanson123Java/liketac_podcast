@@ -1,0 +1,17 @@
+appId: live.liketac.companion
+productName: Like TAC Companion
+directories:
+  output: release
+files:
+  - dist/**/*
+protocols:
+  - name: Like TAC Recording Studio
+    schemes:
+      - liketac
+win:
+  target:
+    - nsis
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+artifactName: Like-TAC-Companion-${version}-${arch}.${ext}
