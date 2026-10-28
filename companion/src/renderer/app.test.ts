@@ -48,7 +48,7 @@ describe("Like TAC Companion workspace", () => {
     expect(screen.getByText("OBS - LikeTACLive")).toHaveClass("recordingPulse");
     expect(screen.getByRole("button", { name: "Test Recording - coming in a later phase" })).toBeDisabled();
     expect(screen.getByAltText("Like TAC banner preview")).toHaveAttribute("src", "assets/liketac-banner-hd.png");
-    expect(screen.getByLabelText("Like TAC opening reel preview")).toHaveAttribute("src", "assets/like-tac-podcast-opener.mp4");
+    expect(screen.getByLabelText("Like TAC opening reel preview")).toHaveAttribute("src", "assets/like-tac-podcast-opener-companion.webm");
     expect(screen.getByRole("button", { name: "Mute or unmute opening reel preview" })).toBeVisible();
     expect(screen.getByRole("button", { name: "50 - Host Presentation" })).toBeVisible();
     expect(screen.getByRole("button", { name: "Start Live Recording" })).toBeDisabled();

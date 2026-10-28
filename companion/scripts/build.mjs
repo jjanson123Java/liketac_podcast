@@ -11,5 +11,6 @@ await cp("src/renderer/index.html", "dist/renderer/index.html");
 await cp("src/renderer/styles.css", "dist/renderer/styles.css");
 await cp("../public/media/podcast-opener/visual/liketac-banner-hd.png", "dist/renderer/assets/liketac-banner-hd.png");
 await cp("../public/media/podcast-opener/like-tac-podcast-opener.mp4", "dist/renderer/assets/like-tac-podcast-opener.mp4");
+await cp("../public/media/podcast-opener/like-tac-podcast-opener-companion.webm", "dist/renderer/assets/like-tac-podcast-opener-companion.webm");
 await cp("../public/media/podcast-opener/visual/like-tac-podcast-opener-visual-only.mp4", "dist/renderer/assets/like-tac-podcast-opener-visual-only.mp4");
 await cp("../public/media/podcast-opener/audio/like-tac-podcast-opener-original.wav", "dist/renderer/assets/like-tac-podcast-opener-original.wav");

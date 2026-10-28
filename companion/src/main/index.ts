@@ -117,6 +117,7 @@ else {
     const assetChecks = [
       ["liketac-banner-hd.png", "Like TAC banner", "ed5a5c0a58b0cb05e17f3df9285ae2681cd995274ab62259bb4e46200731e420"],
       ["like-tac-podcast-opener.mp4", "Opening reel", "48b1cb5343e07d19c7871cce4174487a40b0214fa2c23db1b740ed462e7237d1"],
+      ["like-tac-podcast-opener-companion.webm", "Companion-compatible opening reel", "ef1d8a536aabf9796703109b3e2a12e00058810cd504f044aa01026012baa30a"],
       ["like-tac-podcast-opener-visual-only.mp4", "Visual-only opening reel", "5aa916f7ffc4e4618580a5f39e50a5897e736acb687665e8e5ae67875a28f41d"],
       ["like-tac-podcast-opener-original.wav", "Opening reel audio", "62281608b16d6705246b31f98b3360bc0d3034553c544b4e89f12bd8285eceb1"],
     ] as const;
