@@ -15,6 +15,7 @@ export type CompanionStatus = {
   sceneCollection: string | null;
   programScene: string | null;
   recording: boolean;
+  recordingState?: "inactive" | "active" | "unknown";
   recordingStartedAt: string | null;
   availableScenes: ApprovedScene[];
 };
