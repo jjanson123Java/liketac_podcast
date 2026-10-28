@@ -17,5 +17,6 @@ export type CompanionStatus = {
   recording: boolean;
   recordingState?: "inactive" | "active" | "unknown";
   recordingStartedAt: string | null;
-  availableScenes: ApprovedScene[];
+  availableScenes: readonly ApprovedScene[];
+  readiness?: Array<{ id: string; label: string; ready: boolean; reason: string | null }>;
 };
