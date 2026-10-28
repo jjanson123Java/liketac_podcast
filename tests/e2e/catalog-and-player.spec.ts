@@ -7,12 +7,31 @@ test("catalog groups episodes by subject and exposes free episode details", asyn
   await expect(page.getByText("Coming Soon", { exact: true }).first()).toBeVisible();
   await expect(page.getByRole("heading", { name: "Start Here", exact: true })).toBeVisible();
   await expect(page.getByText("New Episode", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("AI: useful coworker or confident liar? opening reel placeholder")).toHaveAttribute(
+    "src",
+    "/media/podcast-opener/like-tac-podcast-opener.mp4",
+  );
+  await expect(page.getByLabel("Deploying and Configuring Expressway podcast preview")).toHaveAttribute(
+    "src",
+    "/media/podcast-opener/like-tac-podcast-opener.mp4",
+  );
+  await expect(page.getByLabel("Collaboration podcast preview")).toHaveAttribute(
+    "src",
+    "/media/podcast-opener/like-tac-podcast-opener.mp4",
+  );
 
-  await page
+  const episodeLink = page
     .getByRole("article")
     .filter({ hasText: "AI: useful coworker or confident liar?" })
-    .getByRole("link", { name: "Play episode" })
-    .click();
+    .getByRole("link", { name: "Play episode" });
+  await Promise.all([
+    page.waitForURL("**/shows/ai-useful-coworker"),
+    episodeLink.click(),
+  ]);
   await expect(page.getByRole("heading", { name: "AI: useful coworker or confident liar?" })).toBeVisible();
-  await expect(page.getByText("Media coming soon")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Podcast coming soon" })).toBeVisible();
+  await expect(page.getByLabel("AI: useful coworker or confident liar? podcast preview")).toHaveAttribute(
+    "src",
+    "/media/podcast-opener/like-tac-podcast-opener.mp4",
+  );
 });

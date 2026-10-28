@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, isNull } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull } from "drizzle-orm";
 import { createContentDb } from "@/db/content/client";
 import { categories, episodes, mediaVariants } from "@/db/content/schema";
 
@@ -7,7 +7,11 @@ export async function getCatalog() {
   const db = createContentDb();
   const categoryRows = await db.select().from(categories).where(isNull(categories.deletedAt)).orderBy(asc(categories.sortOrder), asc(categories.name));
   const episodeRows = await db.select().from(episodes).where(and(eq(episodes.status, "published"), isNull(episodes.deletedAt))).orderBy(desc(episodes.publishedAt));
-  return categoryRows.map((category) => ({ ...category, episodes: episodeRows.filter((episode) => episode.categoryId === category.id) }));
+  const mediaRows = episodeRows.length
+    ? await db.select({ episodeId: mediaVariants.episodeId }).from(mediaVariants).where(and(inArray(mediaVariants.episodeId, episodeRows.map((episode) => episode.id)), inArray(mediaVariants.kind, ["audio", "video", "teaser"]), isNull(mediaVariants.deletedAt)))
+    : [];
+  const episodeIdsWithMedia = new Set(mediaRows.map((media) => media.episodeId));
+  return categoryRows.map((category) => ({ ...category, episodes: episodeRows.filter((episode) => episode.categoryId === category.id).map((episode) => ({ ...episode, hasMedia: episodeIdsWithMedia.has(episode.id) })) }));
 }
 
 export async function getEpisodeBySlug(slug: string) {
@@ -17,4 +21,4 @@ export async function getEpisodeBySlug(slug: string) {
 }
 
 const now = new Date();
-const sampleCatalog = [{ id: "sample-category-1", name: "AI without the headache", slug: "ai-without-the-headache", description: "Useful AI ideas explained in plain language.", sortOrder: 1, createdAt: now, updatedAt: now, deletedAt: null, episodes: [{ id: "sample-episode-1", categoryId: "sample-category-1", title: "AI: useful coworker or confident liar?", slug: "ai-useful-coworker", summary: "A lively, practical conversation about where AI helps—and where it absolutely does not.", status: "published" as const, accessLevel: "public" as const, isStartHere: false, isCurrent: true, publishedAt: new Date("2026-10-27T12:00:00Z"), createdAt: now, updatedAt: now, deletedAt: null }, { id: "sample-episode-2", categoryId: "sample-category-1", title: "Tech explained like you’re at lunch", slug: "tech-at-lunch", summary: "Plain language, real examples, and no shame in asking the obvious question.", status: "published" as const, accessLevel: "public" as const, isStartHere: true, isCurrent: false, publishedAt: new Date("2026-10-20T12:00:00Z"), createdAt: now, updatedAt: now, deletedAt: null }] }, { id: "sample-category-2", name: "Deploying and Configuring Expressway", slug: "expressway", description: "Practical Expressway deployment and configuration conversations.", sortOrder: 2, createdAt: now, updatedAt: now, deletedAt: null, episodes: [] }];
+const sampleCatalog = [{ id: "sample-category-1", name: "AI without the headache", slug: "ai-without-the-headache", description: "Useful AI ideas explained in plain language.", sortOrder: 1, createdAt: now, updatedAt: now, deletedAt: null, episodes: [{ id: "sample-episode-1", categoryId: "sample-category-1", title: "AI: useful coworker or confident liar?", slug: "ai-useful-coworker", summary: "A lively, practical conversation about where AI helps—and where it absolutely does not.", status: "published" as const, accessLevel: "public" as const, isStartHere: false, isCurrent: true, hasMedia: false, publishedAt: new Date("2026-10-27T12:00:00Z"), createdAt: now, updatedAt: now, deletedAt: null }, { id: "sample-episode-2", categoryId: "sample-category-1", title: "Tech explained like you’re at lunch", slug: "tech-at-lunch", summary: "Plain language, real examples, and no shame in asking the obvious question.", status: "published" as const, accessLevel: "public" as const, isStartHere: true, isCurrent: false, hasMedia: false, publishedAt: new Date("2026-10-20T12:00:00Z"), createdAt: now, updatedAt: now, deletedAt: null }] }, { id: "sample-category-2", name: "Deploying and Configuring Expressway", slug: "expressway", description: "Practical Expressway deployment and configuration conversations.", sortOrder: 2, createdAt: now, updatedAt: now, deletedAt: null, episodes: [] }];

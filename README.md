@@ -2,6 +2,22 @@
 
 Production Next.js portal for [liketac.live](https://liketac.live): relaxed, plain-language technical podcasts for beginners and experienced listeners learning a new technology.
 
+## Podcast opening reel
+
+The approved seven-second Like TAC opener and all editable components live in
+`public/media/podcast-opener/`. The bundle contains the composed MP4, a visual-only MP4, the original
+WAV soundtrack, the closing Like TAC visual, provenance documentation, and regeneration instructions.
+
+Regenerate the reel after editing `scripts/create-podcast-opener.mjs` or replacing a component:
+
+```powershell
+node scripts/create-podcast-opener.mjs
+```
+
+The Browse Shows page uses the composed reel wherever a subject or listed episode is waiting for its
+finished recording. Replace that placeholder with the finished `intro + podcast + credits` media when
+the episode is published.
+
 ## Features
 
 - Free visitor access to Start Here and the current New Episode
