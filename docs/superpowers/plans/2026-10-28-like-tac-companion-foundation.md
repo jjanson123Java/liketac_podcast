@@ -25,7 +25,7 @@
 - A malicious `liketac://` URL must not reach arbitrary renderer navigation or OBS requests; Task 3 tests the exact-action allowlist.
 - A dropped OBS connection during recording must not reset the UI to an idle lie or automatically restart recording; Task 2 tests event reconciliation.
 - A close request during active recording must preserve the recording unless the administrator explicitly confirms Stop Recording; Task 3 tests both choices.
-- A missing approved scene must disable only that scene and explain the missing OBS configuration; Task 4 tests partial scene availability.
+- A missing approved scene, device, or media asset must identify the exact problem and keep recording disabled until required readiness passes; Tasks 2 and 4 test partial availability and repair choices.
 - A compromised renderer must not retrieve the saved plaintext password or issue arbitrary OBS requests; Tasks 1 and 3 test the narrow bridges.
 
 ---
@@ -57,14 +57,20 @@
 **Files:**
 - Create: `companion/src/main/obs-client.ts`
 - Create: `companion/src/main/companion-controller.ts`
+- Create: `companion/src/main/obs-launcher.ts`
+- Create: `companion/src/main/device-readiness.ts`
+- Create: `companion/src/main/asset-readiness.ts`
 - Test: `companion/src/main/obs-client.test.ts`
 - Test: `companion/src/main/companion-controller.test.ts`
+- Test: `companion/src/main/obs-launcher.test.ts`
+- Test: `companion/src/main/device-readiness.test.ts`
+- Test: `companion/src/main/asset-readiness.test.ts`
 
 **Interfaces:**
 - Consumes: `OBSConnectionConfig`, `CompanionStatus`, and `ApprovedScene` from Task 1.
-- Produces: `OBSClient` with `connect`, `disconnect`, `getSnapshot`, `setProgramScene`, `startRecord`, `stopRecord`, and event subscription; `CompanionController` with reconciled status and bounded reconnect behavior.
+- Produces: `OBSClient` with `connect`, `disconnect`, `getSnapshot`, `setProgramScene`, `startRecord`, `stopRecord`, source-preview/readiness requests, and event subscription; `OBSLauncher` for safe standard-path discovery and explicit Like TAC arguments; `DeviceReadinessService`; `AssetReadinessService`; `CompanionController` with reconciled status and bounded reconnect behavior.
 
-- [ ] Write failing adapter/controller tests for successful connection, wrong password, unavailable OBS, scene discovery, approved scene switching, duplicate start, confirmed stop, dropped connection while recording, reconnect without automatic recording, and bounded retry.
+- [ ] Write failing tests for successful connection, wrong password, unavailable OBS, exact launch arguments and working directory, refusal to relaunch while recording/streaming, profile/collection mismatch, scene/source discovery, approved scene switching, device connected/disabled states, microphone level proof, preview-frame proof, asset checksum/preview validation, confirmed asset-path repair, duplicate start, confirmed stop, dropped connection while recording, reconnect without automatic recording, and bounded retry.
 - [ ] Run the focused tests and verify expected missing-module failures.
 - [ ] Implement the typed `obs-websocket-js` adapter and controller with injected timers and client factory.
 - [ ] Run focused tests and the root suite; expect green.
@@ -102,9 +108,9 @@
 
 **Interfaces:**
 - Consumes: `window.likeTacCompanion` from Task 3 and status/contracts from Task 1.
-- Produces: accessible branded UI for connection, diagnostics, approved scenes, Start Live Recording, confirmed Stop, disabled Test Recording explanation, LIVE timer, pulse, missing-scene notices, reconnect, and full-screen.
+- Produces: accessible branded UI for OBS launch/progress, connection, profile/collection validation, device and source checks, visible PNG and reel previews, confirmed asset-path repair, diagnostics, approved scenes, Start Live Recording, confirmed Stop, disabled Test Recording explanation, LIVE timer, pulse, missing-readiness notices, reconnect, and full-screen.
 
-- [ ] Write failing DOM tests for disconnected/auth-failed/connected states, partial scene availability, actual recording-state controls, LIVE timer/pulse, disabled Test Recording copy, full-screen control, and no secret echo.
+- [ ] Write failing DOM tests for OBS-not-running launch, disconnected/auth-failed/connected states, wrong profile/collection, partial device/source availability, guided mic/camera/display checks, visible PNG/reel previews with mute control, asset repair confirmation, actual recording-state controls, LIVE timer/pulse, disabled Test Recording copy, full-screen control, and no secret echo.
 - [ ] Run the renderer test and verify it fails for missing UI.
 - [ ] Implement the minimum accessible renderer and Like TAC styling.
 - [ ] Run the focused test, root suite, companion build, and a static security scan for remote renderer URLs; expect green and no remote content.
@@ -120,13 +126,17 @@
 - Modify: `src/app/help/page.test.tsx`
 - Create: `docs/operations/companion.md`
 - Modify: `README.md`
+- Copy: `public/media/podcast-opener/visual/liketac-banner-hd.png` to Companion packaged resources
+- Copy: `public/media/podcast-opener/like-tac-podcast-opener.mp4` to Companion packaged resources
+- Copy: `public/media/podcast-opener/visual/like-tac-podcast-opener-visual-only.mp4` to Companion packaged resources
+- Copy: `public/media/podcast-opener/audio/like-tac-podcast-opener-original.wav` to Companion packaged resources
 
 **Interfaces:**
 - Consumes: `liketac://recording` registered by Task 3.
 - Produces: admin-only navigation and launch/help content; install, configure, backup, connect, troubleshoot, and restore documentation.
 
 - [ ] Read the current Next.js App Router page/navigation documentation under `node_modules/next/dist/docs/`.
-- [ ] Write failing tests proving the admin dashboard links to Recording Studio, the launcher uses exactly `liketac://recording`, the page states local-only security boundaries and required OBS names, and admin Help uses the approved Companion name.
+- [ ] Write failing tests proving the admin dashboard links to Recording Studio, the launcher uses exactly `liketac://recording`, the page explains OBS auto-launch/readiness, local-only security boundaries, required OBS names and required media assets, and admin Help uses the approved Companion name.
 - [ ] Run focused tests and verify expected missing-content failures.
 - [ ] Implement the protected page, dashboard/help links, and operator documentation without exposing a public or subscriber launcher.
 - [ ] Run focused tests, `npm test`, `npm run build`, and companion tests/build; expect green.

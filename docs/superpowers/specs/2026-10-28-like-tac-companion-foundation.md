@@ -25,6 +25,43 @@ This first phase establishes a reliable local recording controller for the OBS s
 
 ## Phase-one behavior
 
+### OBS launch and readiness
+
+The Recording Studio page launches Companion through `liketac://recording`. Companion then performs a visible readiness sequence before enabling recording controls.
+
+If OBS is not running, Companion locates the standard 64-bit Windows installation and starts OBS with the working directory set to the OBS binary directory and these arguments:
+
+```text
+--profile "LikeTACLive" --collection "LikeTACLive Studio" --scene "00 - Standby"
+```
+
+Companion never adds `--startrecording`. It waits for the authenticated WebSocket connection and reports startup progress. If OBS is not installed in a standard location, Companion provides a Browse for OBS action and remembers the administrator-approved executable path locally.
+
+If OBS is already running, Companion reads the current profile and scene collection. A mismatch blocks recording and offers a controlled relaunch using the required Like TAC configuration. Companion never changes or restarts a running OBS instance while recording or streaming.
+
+The readiness screen verifies all of the following before enabling Start Live Recording:
+
+- Current profile is exactly `LikeTACLive`.
+- Current scene collection is exactly `LikeTACLive Studio`.
+- All approved scenes and their required sources exist.
+- Windows reports the expected cameras, microphones, and displays as currently connected.
+- OBS reports the configured inputs and capture sources as active.
+- `LCS_MIC_Host_Primary` produces a live level during a guided microphone check.
+- Camera and presentation sources can produce a current preview frame.
+- The Like TAC banner PNG and opening reel are present, readable, and visible in Companion's asset preview.
+- The `00 - Standby` and `70 - Audio Only` sources reference readable Like TAC assets.
+
+Device readiness uses friendly Windows names, including manufacturer/model information where Windows exposes it. Disconnected devices remain visible but disabled with a plain-language reason. Companion may preview a camera or display only after the administrator selects the test; it does not silently activate unrelated devices.
+
+The installer bundles these approved assets so readiness does not depend on the Git checkout or OneDrive path:
+
+- `liketac-banner-hd.png`
+- `like-tac-podcast-opener.mp4`
+- `like-tac-podcast-opener-visual-only.mp4`
+- `like-tac-podcast-opener-original.wav`
+
+Companion verifies bundled assets against committed SHA-256 checksums and displays the PNG and plays the reel with mute/unmute controls. If an OBS asset source points to a missing path, Companion offers an explicit Repair Asset Path action using the bundled copy; it never rewrites source settings without administrator confirmation.
+
 ### Connection
 
 On first launch, Companion shows the fixed host `127.0.0.1`, port `4455`, a password field, and a Connect button. A successful connection displays the OBS version, current profile, current scene collection, active program scene, and recording state. Failed authentication, unavailable OBS, and dropped connections produce distinct plain-language messages with a Retry action.
@@ -72,7 +109,7 @@ The packaged application and installer are build artifacts and are not committed
 - Remote participant invitations and WebRTC media transport
 - Guest mute/privacy enforcement
 - Dynamic browser sources for guests or demo laptops
-- Camera, microphone, and monitor enumeration or switching
+- Automatic camera, microphone, or monitor switching (phase one performs enumeration and readiness checks only)
 - Starting or controlling Audacity
 - Test-recording deletion
 - FFmpeg mastering and version comparison
@@ -82,7 +119,7 @@ These capabilities require independent security and failure-mode designs. Phase 
 
 ## Acceptance criteria
 
-- A Windows administrator can install Companion, enter the local OBS password, connect, see the actual OBS state, switch among available approved scenes, start recording, and stop with confirmation.
+- A Windows administrator can install Companion, launch or reconnect to OBS with the required Like TAC profile and collection, complete device and asset readiness checks, see the actual OBS state, switch among available approved scenes, start recording, and stop with confirmation.
 - A wrong password, stopped OBS, missing scene, dropped connection, duplicate start, and application close during recording all produce safe and understandable behavior.
 - The OBS password does not cross into the Next.js application or logs.
 - Existing website tests remain green and Companion has automated tests for its state machine, allowlists, connection adapter, and renderer behavior.
