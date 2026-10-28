@@ -3,6 +3,12 @@ import type { CompanionWindowAPI } from "../shared/window-api";
 
 type Invoke = (channel: string, ...arguments_: unknown[]) => Promise<unknown>;
 type Subscribe = (channel: string, listener: (value: CompanionStatus) => void) => () => void;
+type Bridge = { exposeInMainWorld(name: string, value: unknown): void };
+type Ipc = {
+  invoke(channel: string, ...arguments_: unknown[]): Promise<unknown>;
+  on(channel: string, listener: (_event: unknown, value: CompanionStatus) => void): void;
+  removeListener(channel: string, listener: (_event: unknown, value: CompanionStatus) => void): void;
+};
 
 export function createCompanionAPI(invoke: Invoke, subscribe: Subscribe): CompanionWindowAPI {
   return Object.freeze({
@@ -19,15 +25,13 @@ export function createCompanionAPI(invoke: Invoke, subscribe: Subscribe): Compan
   });
 }
 
-if (process.versions.electron) {
-  void import("electron").then(({ contextBridge, ipcRenderer }) => {
-    const subscribe: Subscribe = (channel, listener) => {
-      const handler = (_event: unknown, value: CompanionStatus) => listener(value);
-      ipcRenderer.on(channel, handler);
-      return () => ipcRenderer.removeListener(channel, handler);
-    };
-    contextBridge.exposeInMainWorld("likeTacCompanion", createCompanionAPI(
-      (channel, ...arguments_) => ipcRenderer.invoke(channel, ...arguments_), subscribe,
-    ));
-  });
+export function installCompanionBridge(contextBridge: Bridge, ipcRenderer: Ipc) {
+  const subscribe: Subscribe = (channel, listener) => {
+    const handler = (_event: unknown, value: CompanionStatus) => listener(value);
+    ipcRenderer.on(channel, handler);
+    return () => ipcRenderer.removeListener(channel, handler);
+  };
+  contextBridge.exposeInMainWorld("likeTacCompanion", createCompanionAPI(
+    (channel, ...arguments_) => ipcRenderer.invoke(channel, ...arguments_), subscribe,
+  ));
 }

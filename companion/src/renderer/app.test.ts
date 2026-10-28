@@ -1,7 +1,7 @@
 import { fireEvent, screen } from "@testing-library/dom";
 import "@testing-library/jest-dom/vitest";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { renderCompanion, wireCompanion } from "./app";
+import { renderCompanion, statusChanged, wireCompanion } from "./app";
 import type { CompanionWindowAPI } from "../shared/window-api";
 
 const baseStatus = {
@@ -74,5 +74,15 @@ describe("Like TAC Companion workspace", () => {
     expect(password.value).toBe("");
     fireEvent.click(screen.getByRole("button", { name: "Full screen" }));
     expect(api.setFullScreen).toHaveBeenCalledWith(true);
+  });
+
+  test("does not rebuild stable controls during timer polling", () => {
+    expect(statusChanged(baseStatus, { ...baseStatus })).toBe(false);
+    expect(statusChanged(baseStatus, { ...baseStatus, recording: true })).toBe(true);
+  });
+
+  test("disables readiness checks until OBS is connected", () => {
+    renderCompanion(document.querySelector("#app")!, { ...baseStatus, connection: "disconnected" }, new Date());
+    expect(screen.getByRole("button", { name: "Run readiness checks" })).toBeDisabled();
   });
 });

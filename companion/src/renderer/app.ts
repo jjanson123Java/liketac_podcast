@@ -28,7 +28,7 @@ export function renderCompanion(root: Element, status: CompanionStatus, now = ne
           <p class="check ${profileReady ? "good" : "bad"}">${profileReady ? "Profile ready" : "Required profile: LikeTACLive"}</p>
           <p class="check ${collectionReady ? "good" : "bad"}">${collectionReady ? "Scene collection ready" : "Required scene collection: LikeTACLive Studio"}</p>
         </section>
-        <section><h2>Devices and sources</h2><button id="refresh-readiness" class="quiet">Run readiness checks</button>${checks.length ? checks.map((item) => `<div class="device ${item.ready ? "good" : "bad"}"><strong>${escapeHtml(item.label)}</strong><span>${item.ready ? "Ready" : escapeHtml(item.reason ?? "Check required")}</span></div>`).join("") : "<p>Connect to OBS, speak into the microphone, then run readiness checks.</p>"}</section>
+        <section><h2>Devices and sources</h2><button id="refresh-readiness" class="quiet" ${status.connection === "connected" ? "" : "disabled"}>Run readiness checks</button>${checks.length ? checks.map((item) => `<div class="device ${item.ready ? "good" : "bad"}"><strong>${escapeHtml(item.label)}</strong><span>${item.ready ? "Ready" : escapeHtml(item.reason ?? "Check required")}</span></div>`).join("") : "<p>Connect to OBS, speak into the microphone, then run readiness checks.</p>"}</section>
         <button id="full-screen" class="quiet">Full screen</button>
       </aside>
       <main class="stage">
@@ -38,6 +38,10 @@ export function renderCompanion(root: Element, status: CompanionStatus, now = ne
         <section class="assets"><article><h2>Like TAC banner</h2><img src="assets/liketac-banner-hd.png" alt="Like TAC banner preview"></article><article><h2>Opening reel</h2><video muted playsinline src="assets/like-tac-podcast-opener.mp4" aria-label="Like TAC opening reel preview"></video><button id="toggle-reel-audio">Mute or unmute opening reel preview</button></article></section>
       </main>
     </div>`;
+}
+
+export function statusChanged(previous: CompanionStatus | null, next: CompanionStatus) {
+  return previous === null || JSON.stringify(previous) !== JSON.stringify(next);
 }
 
 export function wireCompanion(root: Element, api: CompanionWindowAPI) {
@@ -65,10 +69,22 @@ export function wireCompanion(root: Element, api: CompanionWindowAPI) {
 async function start() {
   const root = document.querySelector("#app");
   if (!root || !window.likeTacCompanion) return;
-  const draw = (status: CompanionStatus) => { renderCompanion(root, status); wireCompanion(root, window.likeTacCompanion); };
+  let current: CompanionStatus | null = null;
+  const draw = (status: CompanionStatus) => {
+    if (!statusChanged(current, status)) return;
+    current = status;
+    renderCompanion(root, status);
+    wireCompanion(root, window.likeTacCompanion);
+  };
   draw(await window.likeTacCompanion.getStatus());
   window.likeTacCompanion.onStatus(draw);
-  setInterval(async () => draw(await window.likeTacCompanion.getStatus()), 1000);
+  setInterval(async () => {
+    draw(await window.likeTacCompanion.getStatus());
+    if (current?.recording && current.recordingStartedAt) {
+      const time = root.querySelector("time");
+      if (time) time.textContent = elapsed(current.recordingStartedAt, new Date());
+    }
+  }, 1000);
 }
 
 if (typeof window !== "undefined" && "likeTacCompanion" in window) void start();
