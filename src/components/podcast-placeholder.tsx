@@ -3,7 +3,7 @@ import { CatalogPreview } from "./catalog-preview";
 export function PodcastPlaceholder({ subject, catalogPreview = false }: { subject: string; catalogPreview?: boolean }) {
   return (
     <article className="podcastPlaceholder">
-      {catalogPreview ? <CatalogPreview src="/media/podcast-opener/like-tac-podcast-opener.mp4" title={subject} hasPodcast={false} /> : <video
+      {catalogPreview ? <CatalogPreview src="/media/podcast-opener/like-tac-podcast-opener.mp4" title={subject} hasPodcast={false} kind="video" /> : <video
         aria-label={`${subject} podcast preview`}
         controls
         playsInline

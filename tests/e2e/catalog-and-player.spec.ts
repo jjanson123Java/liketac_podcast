@@ -20,7 +20,10 @@ test("catalog groups episodes by subject and exposes free episode details", asyn
     "/media/podcast-opener/like-tac-podcast-opener.mp4",
   );
   await expect(page.getByRole("button", { name: "Unmute preview" }).first()).toBeVisible();
-  await expect(page.getByLabel("AI: useful coworker or confident liar? opening reel placeholder")).not.toHaveAttribute("controls");
+  const catalogPreview = page.getByLabel("AI: useful coworker or confident liar? opening reel placeholder");
+  await expect(catalogPreview).not.toHaveAttribute("controls");
+  await expect.poll(async () => catalogPreview.evaluate((media: HTMLVideoElement) => media.currentTime > 0.25), { timeout: 5_000 }).toBe(true);
+  await expect.poll(async () => catalogPreview.evaluate((media: HTMLVideoElement) => media.paused && media.currentTime < 0.2), { timeout: 10_000 }).toBe(true);
 
   const episodeLink = page
     .getByRole("article")

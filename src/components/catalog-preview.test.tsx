@@ -6,7 +6,7 @@ import { CatalogPreview } from "./catalog-preview";
 describe("CatalogPreview", () => {
   test("uses a muted chromeless preview and jumps through the approved excerpt sequence", () => {
     const { container } = render(
-      <CatalogPreview src="/api/media/video-1" title="AI basics" hasPodcast />,
+      <CatalogPreview src="/api/media/video-1" title="AI basics" hasPodcast kind="video" />,
     );
     const video = container.querySelector("video") as HTMLVideoElement;
 
@@ -27,32 +27,74 @@ describe("CatalogPreview", () => {
     expect(video.currentTime).toBe(27);
     expect(screen.getByText("Preview 0:27")).toBeVisible();
 
+    const pause = vi.fn();
+    video.pause = pause;
     video.currentTime = 30;
     fireEvent.timeUpdate(video);
     expect(video.currentTime).toBe(0);
-    expect(screen.getByText("Preview 0:00")).toBeVisible();
+    expect(pause).toHaveBeenCalledOnce();
+    expect(screen.getByText("Preview complete · 0:00")).toBeVisible();
   });
 
-  test("restarts the opener after the media reaches its actual end", () => {
+  test("checks playback frequently instead of waiting for a coarse browser timeupdate event", () => {
+    vi.useFakeTimers();
     const { container } = render(
-      <CatalogPreview src="/media/podcast-opener/like-tac-podcast-opener.mp4" title="Coming soon" hasPodcast={false} />,
+      <CatalogPreview src="/api/media/video-1" title="AI basics" hasPodcast kind="video" />,
+    );
+    const video = container.querySelector("video") as HTMLVideoElement;
+    video.currentTime = 7.05;
+
+    fireEvent.play(video);
+    vi.advanceTimersByTime(100);
+
+    expect(video.currentTime).toBe(17);
+    vi.useRealTimers();
+  });
+
+  test("explicitly starts muted playback when the media is ready", () => {
+    const { container } = render(
+      <CatalogPreview src="/api/media/video-1" title="AI basics" hasPodcast kind="video" />,
     );
     const video = container.querySelector("video") as HTMLVideoElement;
     const play = vi.fn().mockResolvedValue(undefined);
     video.play = play;
+
+    fireEvent.canPlay(video);
+
+    expect(play).toHaveBeenCalledOnce();
+  });
+
+  test("returns the opener to its beginning and stops after one cycle", () => {
+    const { container } = render(
+      <CatalogPreview src="/media/podcast-opener/like-tac-podcast-opener.mp4" title="Coming soon" hasPodcast={false} kind="video" />,
+    );
+    const video = container.querySelector("video") as HTMLVideoElement;
+    const pause = vi.fn();
+    video.pause = pause;
     video.currentTime = 7;
 
     fireEvent.ended(video);
 
     expect(video.currentTime).toBe(0);
-    expect(play).toHaveBeenCalledOnce();
+    expect(pause).toHaveBeenCalledOnce();
+    expect(screen.getByText("Preview complete · 0:00")).toBeVisible();
+  });
+
+  test("uses a branded visual while an audio-only preview follows the same sequence", () => {
+    const { container } = render(
+      <CatalogPreview src="/api/media/audio-1" title="Audio basics" hasPodcast kind="audio" />,
+    );
+
+    expect(container.querySelector("audio")).toHaveAttribute("src", "/api/media/audio-1");
+    expect(container.querySelector("video")).not.toBeInTheDocument();
+    expect(screen.getByText("Like TAC audio preview")).toBeVisible();
   });
 
   test("stops automatic motion when the visitor requests reduced motion", () => {
     const originalMatchMedia = window.matchMedia;
     window.matchMedia = vi.fn().mockReturnValue({ matches: true });
     const { container } = render(
-      <CatalogPreview src="/api/media/video-1" title="AI basics" hasPodcast />,
+      <CatalogPreview src="/api/media/video-1" title="AI basics" hasPodcast kind="video" />,
     );
     const video = container.querySelector("video") as HTMLVideoElement;
     const pause = vi.fn();
@@ -68,7 +110,7 @@ describe("CatalogPreview", () => {
 
   test("exposes mute and unmute as the only catalog control", () => {
     const { container } = render(
-      <CatalogPreview src="/media/podcast-opener/like-tac-podcast-opener.mp4" title="Coming soon" hasPodcast={false} />,
+      <CatalogPreview src="/media/podcast-opener/like-tac-podcast-opener.mp4" title="Coming soon" hasPodcast={false} kind="video" />,
     );
     const video = container.querySelector("video") as HTMLVideoElement;
     const unmute = screen.getByRole("button", { name: "Unmute preview" });

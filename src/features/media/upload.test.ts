@@ -5,6 +5,7 @@ describe("podcast upload validation", () => {
   it("accepts supported audio, video, teaser, caption, and transcript uploads", () => {
     expect(validateUpload({ pathname: "episodes/abc/main.mp4", contentType: "video/mp4", size: 1_000 }, "video")).toEqual([]);
     expect(validateUpload({ pathname: "episodes/abc/teaser.mp4", contentType: "video/mp4", size: 1_000 }, "teaser")).toEqual([]);
+    expect(validateUpload({ pathname: "episodes/abc/teaser.mp3", contentType: "audio/mpeg", size: 1_000 }, "teaser")).toEqual([]);
     expect(validateUpload({ pathname: "episodes/abc/captions.vtt", contentType: "text/vtt", size: 1_000 }, "captions")).toEqual([]);
   });
 
