@@ -16,7 +16,7 @@ export type OBSSnapshot = {
   programScene: string;
   recording: boolean;
   streaming: boolean;
-  availableScenes: ApprovedScene[];
+  availableScenes: readonly ApprovedScene[];
 };
 
 export class OBSAuthenticationError extends Error {}

@@ -7,6 +7,8 @@ describe("CompanionController", () => {
       connect: vi.fn(async () => undefined),
       getSnapshot: vi.fn(async () => ({ recording: true, streaming: false, availableScenes: [], obsVersion: "33", profile: "LikeTACLive", sceneCollection: "LikeTACLive Studio", programScene: "10 - Host Only" })),
       startRecord: vi.fn(async () => undefined),
+      stopRecord: vi.fn(async () => undefined),
+      setProgramScene: vi.fn(async () => undefined),
       subscribe: vi.fn(),
     };
     const scheduled: Array<() => void> = [];
