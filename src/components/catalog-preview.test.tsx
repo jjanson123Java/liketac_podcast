@@ -33,6 +33,7 @@ describe("CatalogPreview", () => {
     fireEvent.timeUpdate(video);
     expect(video.currentTime).toBe(0);
     expect(pause).toHaveBeenCalledOnce();
+    expect(screen.getByAltText("AI basics preview returned to the opening frame")).toHaveAttribute("src", expect.stringContaining("liketac-banner-hd.png"));
     expect(screen.getByText("Preview complete · 0:00")).toBeVisible();
   });
 
@@ -77,6 +78,9 @@ describe("CatalogPreview", () => {
 
     expect(video.currentTime).toBe(0);
     expect(pause).toHaveBeenCalledOnce();
+    expect(screen.getByAltText("Coming soon preview returned to the opening frame")).toBeVisible();
+    expect(screen.queryByRole("button", { name: /mute preview/i })).not.toBeInTheDocument();
+    expect(screen.getByText("Preview ended")).toBeVisible();
     expect(screen.getByText("Preview complete · 0:00")).toBeVisible();
   });
 
@@ -87,6 +91,23 @@ describe("CatalogPreview", () => {
 
     expect(container.querySelector("audio")).toHaveAttribute("src", "/api/media/audio-1");
     expect(container.querySelector("video")).not.toBeInTheDocument();
+    expect(screen.getByText("Like TAC audio preview")).toBeVisible();
+  });
+
+  test("stops an audio-only preview without reloading the recording", () => {
+    const { container } = render(
+      <CatalogPreview src="/api/media/audio-1" title="Audio basics" hasPodcast={false} kind="audio" />,
+    );
+    const audio = container.querySelector("audio") as HTMLAudioElement;
+    const load = vi.fn();
+    audio.pause = vi.fn();
+    audio.load = load;
+    audio.currentTime = 7;
+
+    fireEvent.ended(audio);
+
+    expect(audio.currentTime).toBe(0);
+    expect(load).not.toHaveBeenCalled();
     expect(screen.getByText("Like TAC audio preview")).toBeVisible();
   });
 

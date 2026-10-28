@@ -23,7 +23,8 @@ test("catalog groups episodes by subject and exposes free episode details", asyn
   const catalogPreview = page.getByLabel("AI: useful coworker or confident liar? opening reel placeholder");
   await expect(catalogPreview).not.toHaveAttribute("controls");
   await expect.poll(async () => catalogPreview.evaluate((media: HTMLVideoElement) => media.currentTime > 0.25), { timeout: 5_000 }).toBe(true);
-  await expect.poll(async () => catalogPreview.evaluate((media: HTMLVideoElement) => media.paused && media.currentTime < 0.2), { timeout: 10_000 }).toBe(true);
+  await expect(catalogPreview).toBeHidden({ timeout: 10_000 });
+  await expect(page.getByAltText("AI: useful coworker or confident liar? preview returned to the opening frame")).toHaveAttribute("src", /liketac-banner-hd\.png/);
 
   const episodeLink = page
     .getByRole("article")

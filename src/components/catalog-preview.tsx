@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useRef, useState, type RefObject } from "react";
 
 const PODCAST_SEGMENTS = [
@@ -15,6 +16,7 @@ export function CatalogPreview({ src, title, hasPodcast, kind }: { src: string; 
   const monitorRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const completedRef = useRef(false);
   const [muted, setMuted] = useState(true);
+  const [completed, setCompleted] = useState(false);
   const [segmentLabel, setSegmentLabel] = useState("0:00");
   const segments = hasPodcast ? PODCAST_SEGMENTS : OPENER_SEGMENTS;
 
@@ -29,9 +31,10 @@ export function CatalogPreview({ src, title, hasPodcast, kind }: { src: string; 
     if (!media) return;
     stopPreviewMonitor();
     media.pause();
+    completedRef.current = true;
     media.currentTime = 0;
     segmentRef.current = 0;
-    completedRef.current = true;
+    setCompleted(true);
     setSegmentLabel("complete · 0:00");
   }
 
@@ -95,12 +98,12 @@ export function CatalogPreview({ src, title, hasPodcast, kind }: { src: string; 
 
   return (
     <div className="catalogPreview">
-      {kind === "video" ? <video ref={mediaRef as RefObject<HTMLVideoElement | null>} {...mediaProps} playsInline>Your browser does not support the video preview.</video> : <><div className="audioPreviewArtwork" role="img" aria-label={`${title} audio preview artwork`}><strong>Like TAC</strong><span>Like TAC audio preview</span></div><audio ref={mediaRef as RefObject<HTMLAudioElement | null>} {...mediaProps}>Your browser does not support the audio preview.</audio></>}
+      {kind === "video" ? completed ? <Image src="/media/podcast-opener/visual/liketac-banner-hd.png" alt={`${title} preview returned to the opening frame`} width={1536} height={864} loading="eager" style={{ display: "block", width: "100%", height: "auto", aspectRatio: "16 / 9", objectFit: "cover", borderRadius: 14, background: "#002f37" }} /> : <video ref={mediaRef as RefObject<HTMLVideoElement | null>} {...mediaProps} playsInline>Your browser does not support the video preview.</video> : <><div className="audioPreviewArtwork" role="img" aria-label={`${title} audio preview artwork`}><strong>Like TAC</strong><span>Like TAC audio preview</span></div><audio ref={mediaRef as RefObject<HTMLAudioElement | null>} {...mediaProps}>Your browser does not support the audio preview.</audio></>}
       <div className="catalogPreviewControls">
         <span>Preview {segmentLabel}</span>
-        <button className="button quiet" type="button" onClick={toggleMuted}>
+        {kind === "video" && completed ? <span>Preview ended</span> : <button className="button quiet" type="button" onClick={toggleMuted}>
           {muted ? "Unmute preview" : "Mute preview"}
-        </button>
+        </button>}
       </div>
     </div>
   );
