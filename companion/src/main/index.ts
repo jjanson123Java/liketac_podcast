@@ -5,6 +5,7 @@ import { spawn } from "node:child_process";
 import { pathToFileURL } from "node:url";
 import { CompanionApplication } from "./application";
 import { CompanionController } from "./companion-controller";
+import { AssetReadinessService } from "./asset-readiness";
 import { CredentialStore } from "./credential-store";
 import { createOBSClient } from "./obs-client";
 import { OBSLauncher } from "./obs-launcher";
@@ -22,7 +23,7 @@ function broadcastStatus() {
 function registerHandlers() {
   ipcMain.handle("companion:get-status", () => service.status());
   ipcMain.handle("companion:connect", async (_event, password: string) => {
-    const result = await service.connect(password); broadcastStatus(); return result;
+    try { return await service.connect(password); } finally { broadcastStatus(); }
   });
   ipcMain.handle("companion:launch-obs", () => service.launchOBS());
   ipcMain.handle("companion:set-scene", async (_event, scene: ApprovedScene) => {
@@ -93,8 +94,23 @@ else {
     mainWindow.focus();
   });
   void app.whenReady().then(() => {
+    const protocolArguments = process.argv.filter((value) => value.toLowerCase().startsWith("liketac:"));
+    if (protocolArguments.length && !protocolArguments.some((value) => parseCompanionLaunch(value) === "recording")) {
+      app.quit();
+      return;
+    }
     const client = createOBSClient();
-    const controller = new CompanionController(client);
+    const assetReadiness = new AssetReadinessService();
+    const assetChecks = [
+      ["liketac-banner-hd.png", "Like TAC banner", "ed5a5c0a58b0cb05e17f3df9285ae2681cd995274ab62259bb4e46200731e420"],
+      ["like-tac-podcast-opener.mp4", "Opening reel", "48b1cb5343e07d19c7871cce4174487a40b0214fa2c23db1b740ed462e7237d1"],
+      ["like-tac-podcast-opener-visual-only.mp4", "Visual-only opening reel", "5aa916f7ffc4e4618580a5f39e50a5897e736acb687665e8e5ae67875a28f41d"],
+      ["like-tac-podcast-opener-original.wav", "Opening reel audio", "62281608b16d6705246b31f98b3360bc0d3034553c544b4e89f12bd8285eceb1"],
+    ] as const;
+    const controller = new CompanionController(client, setTimeout, async () => Promise.all(assetChecks.map(async ([file, label, hash]) => {
+      const result = await assetReadiness.verify(join(__dirname, "../renderer/assets", file), hash);
+      return { id: `asset:${file}`, label, ...result };
+    })));
     const credentials = new CredentialStore(join(app.getPath("userData"), "obs-credential.json"), {
       isEncryptionAvailable: () => safeStorage.isEncryptionAvailable(),
       encryptString: (value) => safeStorage.encryptString(value),
@@ -113,5 +129,6 @@ else {
     client.subscribe("ConnectionClosed", () => { service.disconnected(); broadcastStatus(); });
     registerHandlers();
     mainWindow = createWindow();
+    void service.connectSaved().then(broadcastStatus).catch(broadcastStatus);
   });
 }

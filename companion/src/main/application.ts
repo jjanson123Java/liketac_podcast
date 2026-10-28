@@ -1,19 +1,26 @@
 import type { ApprovedScene } from "../shared/contracts";
 import type { CompanionController } from "./companion-controller";
 
-type CredentialWriter = { save(password: string): Promise<void> };
+type CredentialStore = { save(password: string): Promise<void>; load(): Promise<string | null> };
 type Launcher = { discover(): Promise<string | null>; launch(executable: string): unknown };
 
 export class CompanionApplication {
   constructor(
     private readonly controller: CompanionController,
-    private readonly credentials: CredentialWriter,
+    private readonly credentials: CredentialStore,
     private readonly launcher: Launcher,
   ) {}
 
   async connect(password: string) {
     await this.controller.connect({ host: "127.0.0.1", port: 4455, password });
     await this.credentials.save(password);
+    return this.status();
+  }
+
+  async connectSaved() {
+    const password = await this.credentials.load();
+    if (!password) return this.status();
+    await this.controller.connect({ host: "127.0.0.1", port: 4455, password });
     return this.status();
   }
 

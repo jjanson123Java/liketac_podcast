@@ -47,4 +47,20 @@ describe("OBSClient", () => {
     raw.call.mockImplementation(async (request: string) => request === "GetRecordStatus" ? { outputActive: true } : {});
     await expect(client.startRecord()).rejects.toThrow("already recording");
   });
+
+  test("reports exact readiness for required Like TAC scenes and sources", async () => {
+    const raw = transport();
+    raw.call.mockImplementation(async (request: string, data?: Record<string, unknown>) => {
+      if (request === "GetSceneList") return { scenes: [{ sceneName: "00 - Standby" }, { sceneName: "10 - Host Only" }] };
+      if (request === "GetInputList") return { inputs: [{ inputName: "LCS_MIC_Host_Primary" }, { inputName: "CAM_Host_Primary" }] };
+      if (request === "GetSourceActive") return { videoActive: data?.sourceName === "CAM_Host_Primary", videoShowing: true };
+      if (request === "GetInputMute") return { inputMuted: false };
+      if (request === "GetSourceScreenshot") return { imageData: "data:image/png;base64,preview" };
+      return {};
+    });
+    const result = await new OBSClient(raw).getReadiness();
+    expect(result).toContainEqual({ id: "scene:50 - Host Presentation", label: "Scene: 50 - Host Presentation", ready: false, reason: "Required OBS scene is missing." });
+    expect(result).toContainEqual({ id: "source:CAM_Host_Primary", label: "Host primary camera", ready: true, reason: null });
+    expect(result).toContainEqual({ id: "source:DISPLAY_Presentation", label: "Presentation display", ready: false, reason: "Required OBS source is missing." });
+  });
 });

@@ -51,6 +51,13 @@ describe("Like TAC Companion workspace", () => {
     expect(screen.getByLabelText("Like TAC opening reel preview")).toHaveAttribute("src", "assets/like-tac-podcast-opener.mp4");
     expect(screen.getByRole("button", { name: "Mute or unmute opening reel preview" })).toBeVisible();
     expect(screen.getByRole("button", { name: "50 - Host Presentation" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Start Live Recording" })).toBeDisabled();
+  });
+
+  test("shows a connection error and retry action", () => {
+    renderCompanion(document.querySelector("#app")!, { ...baseStatus, connection: "authentication-failed", error: "OBS rejected the WebSocket password." }, new Date());
+    expect(screen.getByText("OBS rejected the WebSocket password.")).toBeVisible();
+    expect(screen.getByRole("button", { name: "Connect to OBS" })).toBeVisible();
   });
 
   test("wires full-screen and clears the password immediately after connect", async () => {

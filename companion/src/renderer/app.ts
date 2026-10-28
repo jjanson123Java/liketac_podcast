@@ -20,7 +20,7 @@ export function renderCompanion(root: Element, status: CompanionStatus, now = ne
     <header class="topbar"><div><strong>Like TAC Companion</strong><span id="obs-profile" class="${status.recording ? "recordingPulse" : ""}">OBS - LikeTACLive</span></div><div class="liveState">${status.recording ? `<b>LIVE</b><time>${elapsed(status.recordingStartedAt, now)}</time>` : "Ready when you are"}</div></header>
     <div class="workspace">
       <aside class="controls" aria-label="Recording controls">
-        <section><h2>OBS connection</h2><p class="state ${status.connection}">${escapeHtml(status.connection.replaceAll("-", " "))}</p>
+        <section><h2>OBS connection</h2><p class="state ${status.connection}">${escapeHtml(status.connection.replaceAll("-", " "))}</p>${status.error ? `<p class="connectionError" role="alert">${escapeHtml(status.error)}</p>` : ""}
           ${status.connection === "disconnected" ? '<button id="launch-obs">Launch OBS</button>' : ""}
           <label>OBS WebSocket password<input id="obs-password" type="password" autocomplete="off"></label><button id="connect-obs">Connect to OBS</button>
         </section>
@@ -34,26 +34,27 @@ export function renderCompanion(root: Element, status: CompanionStatus, now = ne
       <main class="stage">
         <section class="preview"><div><span>Program preview</span><strong>${escapeHtml(status.programScene ?? "OBS not connected")}</strong><small>LIVE and device indicators are controls only and are not recorded.</small></div></section>
         <section class="scenes" aria-label="OBS scenes">${APPROVED_SCENES.map((scene) => `<button data-scene="${scene}" ${status.availableScenes.includes(scene) ? "" : "disabled"} class="${scene === status.programScene ? "active" : ""}">${scene}</button>`).join("")}</section>
-        <section class="recordActions"><button disabled title="Safe delete-after-test arrives in a later phase">Test Recording - coming in a later phase</button><button id="start-recording" class="primary" ${allReady || status.recording ? "" : "disabled"}>Start Live Recording</button><button id="stop-recording" class="danger" ${status.recording ? "" : "disabled"}>Stop</button></section>
+        <section class="recordActions"><button disabled title="Safe delete-after-test arrives in a later phase">Test Recording - coming in a later phase</button><button id="start-recording" class="primary" ${allReady && !status.recording ? "" : "disabled"}>Start Live Recording</button><button id="stop-recording" class="danger" ${status.recording ? "" : "disabled"}>Stop</button></section>
         <section class="assets"><article><h2>Like TAC banner</h2><img src="assets/liketac-banner-hd.png" alt="Like TAC banner preview"></article><article><h2>Opening reel</h2><video muted playsinline src="assets/like-tac-podcast-opener.mp4" aria-label="Like TAC opening reel preview"></video><button id="toggle-reel-audio">Mute or unmute opening reel preview</button></article></section>
       </main>
     </div>`;
 }
 
 export function wireCompanion(root: Element, api: CompanionWindowAPI) {
-  root.querySelector("#launch-obs")?.addEventListener("click", () => void api.launchOBS());
+  const safely = (operation: Promise<unknown>) => void operation.catch(() => undefined);
+  root.querySelector("#launch-obs")?.addEventListener("click", () => safely(api.launchOBS()));
   root.querySelector("#connect-obs")?.addEventListener("click", () => {
     const input = root.querySelector<HTMLInputElement>("#obs-password")!;
     const password = input.value;
     input.value = "";
-    void api.connect(password);
+    safely(api.connect(password));
   });
-  root.querySelector("#full-screen")?.addEventListener("click", () => void api.setFullScreen(true));
-  root.querySelector("#start-recording")?.addEventListener("click", () => void api.startRecording());
+  root.querySelector("#full-screen")?.addEventListener("click", () => safely(api.setFullScreen(true)));
+  root.querySelector("#start-recording")?.addEventListener("click", () => safely(api.startRecording()));
   root.querySelector("#stop-recording")?.addEventListener("click", () => {
-    if (window.confirm("Stop the current OBS recording?")) void api.stopRecording();
+    if (window.confirm("Stop the current OBS recording?")) safely(api.stopRecording());
   });
-  root.querySelectorAll<HTMLElement>("[data-scene]").forEach((button) => button.addEventListener("click", () => void api.setScene(button.dataset.scene as any)));
+  root.querySelectorAll<HTMLElement>("[data-scene]").forEach((button) => button.addEventListener("click", () => safely(api.setScene(button.dataset.scene as any))));
   root.querySelector("#toggle-reel-audio")?.addEventListener("click", () => {
     const video = root.querySelector<HTMLVideoElement>("video")!;
     video.muted = !video.muted;

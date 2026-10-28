@@ -11,6 +11,7 @@ describe("Like TAC Companion control flow", () => {
     const client = {
       connect: vi.fn(async () => undefined),
       getSnapshot: vi.fn(async () => snapshot),
+      getReadiness: vi.fn(async () => [{ id: "mic", label: "LCS host microphone", ready: true, reason: null }]),
       setProgramScene: vi.fn(async (scene: string) => { snapshot = { ...snapshot, programScene: scene }; }),
       startRecord: vi.fn(async () => { snapshot = { ...snapshot, recording: true }; }),
       stopRecord: vi.fn(async () => { snapshot = { ...snapshot, recording: false }; }),
@@ -18,7 +19,7 @@ describe("Like TAC Companion control flow", () => {
     };
     const scheduled: Array<() => void | Promise<void>> = [];
     const controller = new CompanionController(client, (callback) => { scheduled.push(callback); return 1; });
-    const credentials = { save: vi.fn(async () => undefined) };
+    const credentials = { save: vi.fn(async () => undefined), load: vi.fn(async () => null) };
     const launcher = { discover: vi.fn(async () => "C:\\Program Files\\obs-studio\\bin\\64bit\\obs64.exe"), launch: vi.fn() };
     const application = new CompanionApplication(controller, credentials, launcher);
 
@@ -43,7 +44,7 @@ describe("Like TAC Companion control flow", () => {
   });
 
   test("requires explicit confirmation before stopping", async () => {
-    const application = new CompanionApplication({} as CompanionController, { save: vi.fn() }, { discover: vi.fn(), launch: vi.fn() });
+    const application = new CompanionApplication({} as CompanionController, { save: vi.fn(), load: vi.fn() }, { discover: vi.fn(), launch: vi.fn() });
     await expect(application.stopRecording(false)).rejects.toThrow("confirmation");
   });
 });

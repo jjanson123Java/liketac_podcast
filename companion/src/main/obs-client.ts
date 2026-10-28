@@ -19,6 +19,13 @@ export type OBSSnapshot = {
   availableScenes: readonly ApprovedScene[];
 };
 
+const REQUIRED_SOURCES = [
+  { name: "LCS_MIC_Host_Primary", label: "LCS host microphone", kind: "audio" },
+  { name: "CAM_Host_Primary", label: "Host primary camera", kind: "video" },
+  { name: "CAM_DeskPro_PNP", label: "DeskPro presentation camera", kind: "video" },
+  { name: "DISPLAY_Presentation", label: "Presentation display", kind: "video" },
+] as const;
+
 export class OBSAuthenticationError extends Error {}
 
 export class OBSClient {
@@ -53,6 +60,38 @@ export class OBSClient {
       streaming: Boolean(stream.outputActive),
       availableScenes: APPROVED_SCENES.filter((scene) => discovered.has(scene)),
     };
+  }
+
+  async getReadiness() {
+    const [sceneResult, inputResult] = await Promise.all([
+      this.transport.call("GetSceneList"), this.transport.call("GetInputList"),
+    ]);
+    const scenes = new Set((sceneResult.scenes ?? []).map((item: { sceneName: string }) => item.sceneName));
+    const inputs = new Set((inputResult.inputs ?? []).map((item: { inputName: string }) => item.inputName));
+    const checks: Array<{ id: string; label: string; ready: boolean; reason: string | null }> = APPROVED_SCENES.map((scene) => ({
+      id: `scene:${scene}`, label: `Scene: ${scene}`, ready: scenes.has(scene),
+      reason: scenes.has(scene) ? null : "Required OBS scene is missing.",
+    }));
+    for (const source of REQUIRED_SOURCES) {
+      if (!inputs.has(source.name)) {
+        checks.push({ id: `source:${source.name}`, label: source.label, ready: false, reason: "Required OBS source is missing." });
+        continue;
+      }
+      try {
+        if (source.kind === "audio") {
+          const result = await this.transport.call("GetInputMute", { inputName: source.name });
+          const ready = result.inputMuted === false;
+          checks.push({ id: `source:${source.name}`, label: source.label, ready, reason: ready ? null : "OBS microphone source is muted." });
+        } else {
+          const result = await this.transport.call("GetSourceScreenshot", { sourceName: source.name, imageFormat: "png", imageWidth: 160 });
+          const ready = typeof result.imageData === "string" && result.imageData.startsWith("data:image/png");
+          checks.push({ id: `source:${source.name}`, label: source.label, ready, reason: ready ? null : "OBS could not produce a preview from this source." });
+        }
+      } catch {
+        checks.push({ id: `source:${source.name}`, label: source.label, ready: false, reason: source.kind === "audio" ? "OBS could not verify the microphone source." : "OBS could not produce a preview from this source." });
+      }
+    }
+    return checks;
   }
 
   async setProgramScene(scene: string) {
