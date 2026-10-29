@@ -33,6 +33,12 @@ function registerHandlers() {
     try { return await service.connect(password); } finally { broadcastStatus(); }
   });
   ipcMain.handle("companion:launch-obs", () => service.launchOBS());
+  ipcMain.handle("companion:disconnect-obs", async () => {
+    const result = await service.disconnectOBS(); broadcastStatus(); return result;
+  });
+  ipcMain.handle("companion:close-obs", async () => {
+    try { return await service.closeOBS(true); } finally { broadcastStatus(); }
+  });
   ipcMain.handle("companion:set-scene", async (_event, scene: ApprovedScene) => {
     const result = await service.setScene(scene); broadcastStatus(); return result;
   });

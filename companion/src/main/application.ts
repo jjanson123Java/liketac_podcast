@@ -2,7 +2,7 @@ import type { ApprovedScene } from "../shared/contracts";
 import type { CompanionController } from "./companion-controller";
 
 type CredentialStore = { save(password: string): Promise<void>; load(): Promise<string | null> };
-type Launcher = { discover(): Promise<string | null>; launch(executable: string): unknown };
+type Launcher = { discover(): Promise<string | null>; launch(executable: string): unknown; closeLaunched(): Promise<boolean> };
 
 export class CompanionApplication {
   constructor(
@@ -33,6 +33,20 @@ export class CompanionApplication {
     if (!executable) throw new Error("OBS was not found in a standard installation folder.");
     this.launcher.launch(executable);
     return { executable };
+  }
+
+  async disconnectOBS() {
+    await this.controller.disconnect();
+    return this.status();
+  }
+
+  async closeOBS(confirmed: boolean) {
+    if (!confirmed) throw new Error("Administrator confirmation is required before closing OBS.");
+    if (this.status().recording) await this.controller.stopRecording();
+    const closed = await this.launcher.closeLaunched();
+    await this.controller.disconnect();
+    if (!closed) throw new Error("OBS was not launched by this Companion session, so it was disconnected but not closed.");
+    return { closed: true, status: this.status() };
   }
 
   async setScene(scene: ApprovedScene) {

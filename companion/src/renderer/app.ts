@@ -24,6 +24,7 @@ export function renderCompanion(root: Element, status: CompanionStatus, now = ne
         <section><h2>OBS connection</h2><p class="state ${status.connection}">${escapeHtml(status.connection.replaceAll("-", " "))}</p>${status.error ? `<p class="connectionError" role="alert">${escapeHtml(status.error)}</p>` : ""}
           ${status.connection === "disconnected" ? '<button id="launch-obs">Launch OBS</button>' : ""}
           <label>OBS WebSocket password<input id="obs-password" type="password" autocomplete="off"></label><button id="connect-obs">Connect to OBS</button>
+          <div class="connectionActions"><button id="disconnect-obs" class="quiet" ${status.connection === "connected" ? "" : "disabled"}>Disconnect from OBS</button><button id="close-obs" class="danger" ${status.connection === "connected" ? "" : "disabled"}>Close OBS</button></div>
         </section>
         <section><h2>Configuration</h2>
           <p class="check ${profileReady ? "good" : "bad"}">${profileReady ? "Profile ready" : "Required profile: LikeTACLive"}</p>
@@ -55,6 +56,10 @@ export function wireCompanion(root: Element, api: CompanionWindowAPI) {
     alert.textContent = error instanceof Error ? error.message : "The requested action could not be completed.";
   });
   root.querySelector("#launch-obs")?.addEventListener("click", () => safely(api.launchOBS()));
+  root.querySelector("#disconnect-obs")?.addEventListener("click", () => safely(api.disconnectOBS()));
+  root.querySelector("#close-obs")?.addEventListener("click", () => {
+    if (window.confirm("Close the OBS instance started by Companion? Any active recording will be stopped first.")) safely(api.closeOBS());
+  });
   root.querySelector("#connect-obs")?.addEventListener("click", () => {
     const input = root.querySelector<HTMLInputElement>("#obs-password")!;
     const password = input.value;

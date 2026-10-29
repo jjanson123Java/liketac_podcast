@@ -9,4 +9,24 @@ describe("CompanionApplication", () => {
     await expect(app.connectSaved()).resolves.toEqual({ connection: "connected" });
     expect(controller.connect).toHaveBeenCalledWith({ host: "127.0.0.1", port: 4455, password: "saved-secret" });
   });
+
+  test("disconnects without closing OBS", async () => {
+    const controller = { disconnect: vi.fn(async () => undefined), status: vi.fn(() => ({ connection: "disconnected" })) };
+    const app = new CompanionApplication(controller as any, {} as any, {} as any);
+    await expect(app.disconnectOBS()).resolves.toEqual({ connection: "disconnected" });
+    expect(controller.disconnect).toHaveBeenCalledOnce();
+  });
+
+  test("stops recording before closing only the OBS process launched by Companion", async () => {
+    const controller = {
+      status: vi.fn(() => ({ connection: "connected", recording: true })),
+      stopRecording: vi.fn(async () => undefined), disconnect: vi.fn(async () => undefined),
+    };
+    const launcher = { closeLaunched: vi.fn(async () => true) };
+    const app = new CompanionApplication(controller as any, {} as any, launcher as any);
+    await expect(app.closeOBS(true)).resolves.toMatchObject({ closed: true });
+    expect(controller.stopRecording).toHaveBeenCalledOnce();
+    expect(launcher.closeLaunched).toHaveBeenCalledOnce();
+    expect(controller.disconnect).toHaveBeenCalledOnce();
+  });
 });

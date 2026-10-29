@@ -22,10 +22,12 @@ const STANDARD_OBS_PATHS = [
 
 type LauncherDependencies = {
   exists(path: string): Promise<boolean>;
-  spawn(executable: string, arguments_: string[], options: { cwd: string; windowsHide: boolean }): unknown;
+  spawn(executable: string, arguments_: string[], options: { cwd: string; windowsHide: boolean }): { kill(): boolean; killed?: boolean };
 };
 
 export class OBSLauncher {
+  private launchedProcess: { kill(): boolean; killed?: boolean } | null = null;
+
   constructor(private readonly dependencies: LauncherDependencies) {}
 
   async discover() {
@@ -37,9 +39,17 @@ export class OBSLauncher {
 
   launch(executable: string) {
     const spec = buildOBSLaunchSpec(executable);
-    return this.dependencies.spawn(spec.executable, spec.arguments, {
+    this.launchedProcess = this.dependencies.spawn(spec.executable, spec.arguments, {
       cwd: spec.workingDirectory,
       windowsHide: false,
     });
+    return this.launchedProcess;
+  }
+
+  async closeLaunched() {
+    if (!this.launchedProcess || this.launchedProcess.killed) return false;
+    const closed = this.launchedProcess.kill();
+    if (closed) this.launchedProcess = null;
+    return closed;
   }
 }

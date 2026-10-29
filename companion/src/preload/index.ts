@@ -18,6 +18,8 @@ export function createCompanionAPI(invoke: Invoke, subscribe: Subscribe): Compan
     getProgramPreview: () => invoke("companion:get-program-preview") as Promise<string>,
     refresh: () => invoke("companion:refresh") as Promise<CompanionStatus>,
     launchOBS: () => invoke("companion:launch-obs"),
+    disconnectOBS: () => invoke("companion:disconnect-obs"),
+    closeOBS: () => invoke("companion:close-obs"),
     setScene: (scene: ApprovedScene) => invoke("companion:set-scene", scene),
     startRecording: () => invoke("companion:start-recording"),
     stopRecording: () => invoke("companion:stop-recording"),
