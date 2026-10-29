@@ -24,6 +24,8 @@ function broadcastStatus() {
 
 function registerHandlers() {
   ipcMain.handle("companion:get-status", () => service.status());
+  ipcMain.handle("companion:sync-status", () => service.syncStatus());
+  ipcMain.handle("companion:get-program-preview", () => service.getProgramPreview());
   ipcMain.handle("companion:refresh", async () => {
     try { return await service.refresh(); } finally { broadcastStatus(); }
   });
@@ -66,6 +68,12 @@ function createWindow() {
     if (!allowedRendererNavigation(target, rendererUrl)) event.preventDefault();
   });
   window.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
+  window.webContents.on("before-input-event", (event, input) => {
+    if (input.key === "Escape" && window.isFullScreen()) {
+      event.preventDefault();
+      window.setFullScreen(false);
+    }
+  });
   void window.loadFile(rendererPath);
   window.on("close", (event) => {
     if (allowClose || !service?.status().recording) return;

@@ -3,6 +3,8 @@ import type { ApprovedScene, CompanionStatus } from "./contracts";
 export type CompanionWindowAPI = {
   connect(password: string): Promise<unknown>;
   getStatus(): Promise<CompanionStatus>;
+  syncStatus(): Promise<CompanionStatus>;
+  getProgramPreview(): Promise<string>;
   refresh(): Promise<CompanionStatus>;
   launchOBS(): Promise<unknown>;
   setScene(scene: ApprovedScene): Promise<unknown>;

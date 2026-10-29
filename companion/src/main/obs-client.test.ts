@@ -23,6 +23,20 @@ function transport(overrides: Record<string, unknown> = {}) {
 }
 
 describe("OBSClient", () => {
+  test("returns a current OBS program-scene preview frame", async () => {
+    const raw = transport();
+    raw.call.mockImplementation(async (request: string, data?: Record<string, unknown>) => {
+      if (request === "GetSceneList") return { currentProgramSceneName: "00 - Standby" };
+      if (request === "GetSourceScreenshot") {
+        expect(data).toMatchObject({ sourceName: "00 - Standby", imageFormat: "jpeg", imageWidth: 960 });
+        return { imageData: "data:image/jpeg;base64,frame" };
+      }
+      return {};
+    });
+
+    await expect(new OBSClient(raw).getProgramPreview()).resolves.toBe("data:image/jpeg;base64,frame");
+  });
+
   test("connects to loopback and returns the actual Like TAC snapshot", async () => {
     const raw = transport();
     const client = new OBSClient(raw);

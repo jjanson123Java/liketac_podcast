@@ -74,6 +74,13 @@ describe("Like TAC Companion workspace", () => {
     expect(password.value).toBe("");
     fireEvent.click(screen.getByRole("button", { name: "Full screen" }));
     expect(api.setFullScreen).toHaveBeenCalledWith(true);
+    fireEvent.click(screen.getByRole("button", { name: "Exit full screen" }));
+    expect(api.setFullScreen).toHaveBeenCalledWith(false);
+  });
+
+  test("renders an OBS program preview surface", () => {
+    renderCompanion(document.querySelector("#app")!, baseStatus, new Date());
+    expect(screen.getByLabelText("OBS program preview")).toBeVisible();
   });
 
   test("does not rebuild stable controls during timer polling", () => {
@@ -84,5 +91,18 @@ describe("Like TAC Companion workspace", () => {
   test("disables readiness checks until OBS is connected", () => {
     renderCompanion(document.querySelector("#app")!, { ...baseStatus, connection: "disconnected" }, new Date());
     expect(screen.getByRole("button", { name: "Run readiness checks" })).toBeDisabled();
+  });
+
+  test("shows action failures instead of silently swallowing them", async () => {
+    const api = {
+      refresh: vi.fn(async () => { throw new Error("Readiness check failed."); }),
+      getStatus: vi.fn(async () => baseStatus), onStatus: vi.fn(() => () => undefined),
+    } as unknown as CompanionWindowAPI;
+    renderCompanion(document.querySelector("#app")!, baseStatus, new Date());
+    wireCompanion(document.querySelector("#app")!, api);
+
+    fireEvent.click(screen.getByRole("button", { name: "Run readiness checks" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Readiness check failed.");
   });
 });

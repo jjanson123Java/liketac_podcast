@@ -16,6 +16,7 @@ describe("Like TAC Companion control flow", () => {
       startRecord: vi.fn(async () => { snapshot = { ...snapshot, recording: true }; }),
       stopRecord: vi.fn(async () => { snapshot = { ...snapshot, recording: false }; }),
       subscribe: vi.fn(),
+      getProgramPreview: vi.fn(async () => "data:image/jpeg;base64,test"),
     };
     const scheduled: Array<() => void | Promise<void>> = [];
     const controller = new CompanionController(client, (callback) => { scheduled.push(callback); return 1; });

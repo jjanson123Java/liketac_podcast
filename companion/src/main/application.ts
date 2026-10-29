@@ -25,6 +25,8 @@ export class CompanionApplication {
   }
 
   status() { return this.controller.status(); }
+  syncStatus() { return this.controller.syncSnapshot(); }
+  getProgramPreview() { return this.controller.getProgramPreview(); }
 
   async launchOBS() {
     const executable = await this.launcher.discover();

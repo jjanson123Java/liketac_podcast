@@ -8,8 +8,8 @@ describe("sandboxed preload bridge", () => {
     const api = createCompanionAPI(invoke, subscribe);
 
     expect(Object.keys(api).sort()).toEqual([
-      "connect", "getStatus", "launchOBS", "onStatus", "refresh", "requestClose", "setFullScreen",
-      "setScene", "startRecording", "stopRecording",
+      "connect", "getProgramPreview", "getStatus", "launchOBS", "onStatus", "refresh", "requestClose", "setFullScreen",
+      "setScene", "startRecording", "stopRecording", "syncStatus",
     ]);
     expect(api).not.toHaveProperty("getPassword");
     await api.setScene("10 - Host Only");
