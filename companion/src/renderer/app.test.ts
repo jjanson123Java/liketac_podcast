@@ -23,6 +23,23 @@ describe("Like TAC Companion workspace", () => {
     expect(screen.getByRole("button", { name: "Launch OBS" })).toBeVisible();
     expect(screen.getByLabelText("OBS WebSocket password")).toHaveAttribute("type", "password");
     expect(document.body).not.toHaveTextContent("super-secret");
+    expect(screen.getByRole("button", { name: "Disconnect from OBS" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Close OBS" })).toBeDisabled();
+  });
+
+  test("offers explicit disconnect and close controls while connected", async () => {
+    const api = {
+      disconnectOBS: vi.fn(async () => undefined), closeOBS: vi.fn(async () => undefined),
+      getStatus: vi.fn(async () => baseStatus), onStatus: vi.fn(() => () => undefined),
+    } as unknown as CompanionWindowAPI;
+    renderCompanion(document.querySelector("#app")!, baseStatus, new Date());
+    wireCompanion(document.querySelector("#app")!, api);
+
+    fireEvent.click(screen.getByRole("button", { name: "Disconnect from OBS" }));
+    await vi.waitFor(() => expect(api.disconnectOBS).toHaveBeenCalledOnce());
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    fireEvent.click(screen.getByRole("button", { name: "Close OBS" }));
+    await vi.waitFor(() => expect(api.closeOBS).toHaveBeenCalledOnce());
   });
 
   test("blocks recording and explains a wrong profile or missing device", () => {

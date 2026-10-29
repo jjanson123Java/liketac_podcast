@@ -3,6 +3,7 @@ import type { OBSSnapshot } from "./obs-client";
 
 type ControllerClient = {
   connect(config: OBSConnectionConfig): Promise<void>;
+  disconnect(): Promise<void>;
   getSnapshot(): Promise<OBSSnapshot>;
   getReadiness(): Promise<Array<{ id: string; label: string; ready: boolean; reason: string | null }>>;
   startRecord(): Promise<void>;
@@ -43,6 +44,18 @@ export class CompanionController {
       this.current = { ...this.current, connection: /password|authentication/i.test(message) ? "authentication-failed" : "disconnected", error: message };
       throw error;
     }
+  }
+
+  async disconnect() {
+    this.config = null;
+    this.reconnectAttempt = 0;
+    this.stateRevision += 1;
+    this.snapshotRequest += 1;
+    await this.client.disconnect();
+    this.current = {
+      ...this.current, connection: "disconnected", recordingState: "unknown",
+      programScene: null, availableScenes: [], readiness: [], error: null,
+    };
   }
 
   status() { return { ...this.current }; }

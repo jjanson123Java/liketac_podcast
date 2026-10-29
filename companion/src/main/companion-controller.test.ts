@@ -102,6 +102,7 @@ describe("CompanionController", () => {
   test("marks recording state unknown after a dropped connection and reconnects without starting recording", async () => {
     const client = {
       connect: vi.fn(async () => undefined),
+      disconnect: vi.fn(async () => undefined),
       getSnapshot: vi.fn(async () => ({ recording: true, streaming: false, availableScenes: [], obsVersion: "33", profile: "LikeTACLive", sceneCollection: "LikeTACLive Studio", programScene: "10 - Host Only" })),
       getReadiness: vi.fn(async () => []),
       startRecord: vi.fn(async () => undefined),

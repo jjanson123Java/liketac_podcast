@@ -7,6 +7,8 @@ export type CompanionWindowAPI = {
   getProgramPreview(): Promise<string>;
   refresh(): Promise<CompanionStatus>;
   launchOBS(): Promise<unknown>;
+  disconnectOBS(): Promise<unknown>;
+  closeOBS(): Promise<unknown>;
   setScene(scene: ApprovedScene): Promise<unknown>;
   startRecording(): Promise<unknown>;
   stopRecording(): Promise<unknown>;

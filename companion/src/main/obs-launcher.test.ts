@@ -21,7 +21,8 @@ describe("OBS launcher", () => {
   });
 
   test("discovers and launches the standard 64-bit installation with its required working directory", async () => {
-    const spawn = vi.fn();
+    const child = { kill: vi.fn(() => true), killed: false };
+    const spawn = vi.fn(() => child);
     const launcher = new OBSLauncher({ exists: async (path) => path === "C:\\Program Files\\obs-studio\\bin\\64bit\\obs64.exe", spawn });
     const executable = await launcher.discover();
     expect(executable).toBe("C:\\Program Files\\obs-studio\\bin\\64bit\\obs64.exe");
@@ -31,5 +32,12 @@ describe("OBS launcher", () => {
       ["--profile", "LikeTACLive", "--collection", "LikeTACLive Studio", "--scene", "00 - Standby"],
       { cwd: "C:\\Program Files\\obs-studio\\bin\\64bit", windowsHide: false },
     );
+    await expect(launcher.closeLaunched()).resolves.toBe(true);
+    expect(child.kill).toHaveBeenCalledWith();
+  });
+
+  test("does not close an OBS process that Companion did not launch", async () => {
+    const launcher = new OBSLauncher({ exists: async () => false, spawn: vi.fn() });
+    await expect(launcher.closeLaunched()).resolves.toBe(false);
   });
 });
