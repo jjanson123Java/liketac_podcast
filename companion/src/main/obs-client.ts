@@ -22,8 +22,8 @@ export type OBSSnapshot = {
 const REQUIRED_SOURCES = [
   { name: "LCS_MIC_Host_Primary", label: "LCS host microphone", kind: "audio" },
   { name: "CAM_Host_Primary", label: "Host primary camera", kind: "video" },
-  { name: "CAM_DeskPro_PNP", label: "DeskPro presentation camera", kind: "video" },
-  { name: "DISPLAY_Presentation", label: "Presentation display", kind: "video" },
+  { name: "CAM_DeskPro_Presentation", label: "DeskPro presentation camera", kind: "video" },
+  { name: "DISPLAY_Presentation", label: "Presentation display", kind: "video", allowConfiguredWhenInactive: true },
 ] as const;
 
 export class OBSAuthenticationError extends Error {}
@@ -105,11 +105,27 @@ export class OBSClient {
           const active = !currentScene || !(sourceScenes.get(source.name) ?? []).includes(currentScene)
             ? true
             : Boolean((await this.transport.call("GetSourceActive", { sourceName: source.name })).videoActive);
-          const ready = active && typeof result.imageData === "string" && result.imageData.startsWith("data:image/png");
+          let ready = active && typeof result.imageData === "string" && result.imageData.startsWith("data:image/png");
+          const owningScene = sourceScenes.get(source.name)?.[0];
+          if (!ready && "allowConfiguredWhenInactive" in source && source.allowConfiguredWhenInactive === true
+            && owningScene && owningScene !== currentScene) {
+            const scenePreview = await this.transport.call("GetSourceScreenshot", { sourceName: owningScene, imageFormat: "png", imageWidth: 160 });
+            ready = typeof scenePreview.imageData === "string" && scenePreview.imageData.startsWith("data:image/png");
+          }
           checks.push({ id: `source:${source.name}`, label: source.label, ready, reason: ready ? null : "OBS could not produce a preview from this source." });
         }
       } catch {
-        checks.push({ id: `source:${source.name}`, label: source.label, ready: false, reason: source.kind === "audio" ? "OBS could not verify the microphone source." : "OBS could not produce a preview from this source." });
+        const currentScene = sceneResult.currentProgramSceneName as string | undefined;
+        const owningScene = sourceScenes.get(source.name)?.[0];
+        let sceneReady = false;
+        if (source.kind === "video" && "allowConfiguredWhenInactive" in source && source.allowConfiguredWhenInactive === true
+          && owningScene && owningScene !== currentScene) {
+          try {
+            const scenePreview = await this.transport.call("GetSourceScreenshot", { sourceName: owningScene, imageFormat: "png", imageWidth: 160 });
+            sceneReady = typeof scenePreview.imageData === "string" && scenePreview.imageData.startsWith("data:image/png");
+          } catch { sceneReady = false; }
+        }
+        checks.push({ id: `source:${source.name}`, label: source.label, ready: sceneReady, reason: sceneReady ? null : source.kind === "audio" ? "OBS could not verify the microphone source." : "OBS could not produce a preview from this source." });
       }
     }
     return checks;

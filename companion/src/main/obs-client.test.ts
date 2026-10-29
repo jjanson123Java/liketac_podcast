@@ -67,4 +67,51 @@ describe("OBSClient", () => {
     expect(result).toContainEqual({ id: "source:CAM_Host_Primary", label: "Host primary camera", ready: true, reason: null });
     expect(result).toContainEqual({ id: "source:DISPLAY_Presentation", label: "Presentation display", ready: false, reason: "Required OBS source is missing." });
   });
+
+  test("uses the DeskPro source name saved in the LikeTACLive Studio collection", async () => {
+    const raw = transport();
+    raw.call.mockImplementation(async (request: string, data?: Record<string, unknown>) => {
+      if (request === "GetSceneList") return { currentProgramSceneName: "00 - Standby", scenes: [{ sceneName: "00 - Standby" }, { sceneName: "50 - Host Presentation" }] };
+      if (request === "GetInputList") return { inputs: [{ inputName: "CAM_DeskPro_Presentation" }] };
+      if (request === "GetSceneItemList") return { sceneItems: data?.sceneName === "50 - Host Presentation" ? [{ sourceName: "CAM_DeskPro_Presentation", sceneItemEnabled: true }] : [] };
+      if (request === "GetSourceScreenshot") return { imageData: "data:image/png;base64,preview" };
+      if (request === "GetSourceActive") return { videoActive: true };
+      return {};
+    });
+
+    const result = await new OBSClient(raw).getReadiness();
+
+    expect(result).toContainEqual({ id: "source:CAM_DeskPro_Presentation", label: "DeskPro presentation camera", ready: true, reason: null });
+  });
+
+  test("proves an off-scene presentation display through its owning scene preview", async () => {
+    const raw = transport();
+    raw.call.mockImplementation(async (request: string, data?: Record<string, unknown>) => {
+      if (request === "GetSceneList") return { currentProgramSceneName: "10 - Host Only", scenes: [{ sceneName: "10 - Host Only" }, { sceneName: "50 - Host Presentation" }] };
+      if (request === "GetInputList") return { inputs: [{ inputName: "DISPLAY_Presentation" }] };
+      if (request === "GetSceneItemList") return { sceneItems: data?.sceneName === "50 - Host Presentation" ? [{ sourceName: "DISPLAY_Presentation", sceneItemEnabled: true }] : [] };
+      if (request === "GetSourceScreenshot" && data?.sourceName === "50 - Host Presentation") return { imageData: "data:image/png;base64,scene-preview" };
+      if (request === "GetSourceScreenshot") throw new Error("Source is not currently rendering");
+      return {};
+    });
+
+    const result = await new OBSClient(raw).getReadiness();
+
+    expect(result).toContainEqual({ id: "source:DISPLAY_Presentation", label: "Presentation display", ready: true, reason: null });
+  });
+
+  test("fails an off-scene presentation display when neither source nor owning scene can render", async () => {
+    const raw = transport();
+    raw.call.mockImplementation(async (request: string, data?: Record<string, unknown>) => {
+      if (request === "GetSceneList") return { currentProgramSceneName: "10 - Host Only", scenes: [{ sceneName: "10 - Host Only" }, { sceneName: "50 - Host Presentation" }] };
+      if (request === "GetInputList") return { inputs: [{ inputName: "DISPLAY_Presentation" }] };
+      if (request === "GetSceneItemList") return { sceneItems: data?.sceneName === "50 - Host Presentation" ? [{ sourceName: "DISPLAY_Presentation", sceneItemEnabled: true }] : [] };
+      if (request === "GetSourceScreenshot") throw new Error("No preview available");
+      return {};
+    });
+
+    const result = await new OBSClient(raw).getReadiness();
+
+    expect(result).toContainEqual({ id: "source:DISPLAY_Presentation", label: "Presentation display", ready: false, reason: "OBS could not produce a preview from this source." });
+  });
 });
