@@ -23,5 +23,7 @@ describe("role-aware Help", () => {
     expect(screen.getByRole("heading", { name: "Manage Like TAC with confidence." })).toBeInTheDocument();
     expect(screen.getByText(/Vercel does not directly manage Like TAC subscribers/)).toBeInTheDocument();
     expect(screen.getByText(/Coming Soon/)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Like TAC Companion" })).toBeInTheDocument();
+    expect(screen.getByText(/127\.0\.0\.1:4455/)).toBeInTheDocument();
   });
 });

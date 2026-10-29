@@ -14,3 +14,6 @@ test-results/
 !.env.example
 .agents/
 skills-lock.json
+companion/dist/
+companion/release/
+*.tsbuildinfo

@@ -1,0 +1,20 @@
+{
+  "name": "like-tac-companion",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/main/index.cjs",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "package:win": "npm run build && electron-builder --win",
+    "test": "vitest run src"
+  },
+  "dependencies": {
+    "obs-websocket-js": "^5.0.8"
+  },
+  "devDependencies": {
+    "electron": "^45.1.0",
+    "electron-builder": "^26.18.0",
+    "esbuild": "^0.28.2"
+  }
+}

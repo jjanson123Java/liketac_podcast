@@ -1,0 +1,9 @@
+import { redirect } from "next/navigation";
+import { getSession } from "@/features/auth/session";
+
+export default async function RecordingStudioPage() {
+  const session = await getSession();
+  if (!session || session.role !== "admin") redirect("/admin/sign-in");
+  if (session.mustChangePassword) redirect("/admin/change-password");
+  return <main className="audience"><p className="eyebrow">Protected local recording controls</p><h1>Like TAC Recording Studio</h1><p className="formIntro">Launch the locally installed Like TAC Companion. It starts OBS when it is not running, verifies the required configuration and devices, and keeps recording controls on this computer.</p><div className="cardGrid"><section className="card"><h2>Launch the Companion</h2><p>OBS credentials, cameras, microphones, displays, and raw recordings stay local. The OBS WebSocket password is never sent to Vercel or stored by this website.</p><a className="button primary" href="liketac://recording">Launch Like TAC Companion</a><p>If nothing opens, install or repair Like TAC Companion on this Windows PC.</p></section><section className="card"><h2>Required OBS configuration</h2><ul><li><strong>Profile: LikeTACLive</strong></li><li><strong>Scene collection: LikeTACLive Studio</strong></li><li>Starting scene: 00 - Standby</li><li>WebSocket: 127.0.0.1:4455 with authentication</li></ul><p>Companion blocks recording when required scenes, devices, or source checks are incomplete.</p></section><section className="card"><h2>Required Like TAC media</h2><ul><li><code>liketac-banner-hd.png</code></li><li><code>like-tac-podcast-opener.mp4</code></li><li><code>like-tac-podcast-opener-visual-only.mp4</code></li><li><code>like-tac-podcast-opener-original.wav</code></li></ul><p>Companion displays the banner and plays the reel during readiness checks. It can repair a missing OBS media path only after administrator confirmation.</p></section></div></main>;
+}

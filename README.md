@@ -50,4 +50,4 @@ Copy `.env.example` to `.env.local` only for local development. Never commit con
 
 ## Deployment
 
-See [deployment.md](docs/operations/deployment.md) and [recovery.md](docs/operations/recovery.md).
+See [deployment.md](docs/operations/deployment.md), [recovery.md](docs/operations/recovery.md), and [companion.md](docs/operations/companion.md).
