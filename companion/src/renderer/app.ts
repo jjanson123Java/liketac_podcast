@@ -30,13 +30,15 @@ export function renderCompanion(root: Element, status: CompanionStatus, now = ne
           <p class="check ${collectionReady ? "good" : "bad"}">${collectionReady ? "Scene collection ready" : "Required scene collection: LikeTACLive Studio"}</p>
         </section>
         <section><h2>Devices and sources</h2><button id="refresh-readiness" class="quiet" ${status.connection === "connected" ? "" : "disabled"}>Run readiness checks</button>${checks.length ? checks.map((item) => `<div class="device ${item.ready ? "good" : "bad"}"><strong>${escapeHtml(item.label)}</strong><span>${item.ready ? "Ready" : escapeHtml(item.reason ?? "Check required")}</span></div>`).join("") : "<p>Connect to OBS, speak into the microphone, then run readiness checks.</p>"}</section>
-        <button id="full-screen" class="quiet">Full screen</button><button id="exit-full-screen" class="quiet">Exit full screen</button>
       </aside>
       <main class="stage">
-        <section class="preview"><img id="program-preview-frame" aria-label="OBS program preview" alt="Live OBS program preview"><div class="previewStatus"><span>Program preview</span><strong>${escapeHtml(status.programScene ?? "OBS not connected")}</strong><small>LIVE and device indicators are controls only and are not recorded.</small></div></section>
-        <section class="scenes" aria-label="OBS scenes">${APPROVED_SCENES.map((scene) => `<button data-scene="${scene}" ${status.availableScenes.includes(scene) ? "" : "disabled"} class="${scene === status.programScene ? "active" : ""}">${scene}</button>`).join("")}</section>
-        <section class="recordActions"><button disabled title="Safe delete-after-test arrives in a later phase">Test Recording - coming in a later phase</button><button id="start-recording" class="primary" ${allReady && !status.recording ? "" : "disabled"}>Start Live Recording</button><button id="stop-recording" class="danger" ${status.recording ? "" : "disabled"}>Stop</button></section>
-        <section class="assets"><article><h2>Like TAC banner</h2><img src="assets/liketac-banner-hd.png" alt="Like TAC banner preview"></article><article><h2>Opening reel</h2><video muted playsinline src="assets/like-tac-podcast-opener-companion.webm" aria-label="Like TAC opening reel preview"></video><button id="toggle-reel-audio">Mute or unmute opening reel preview</button></article></section>
+        <div class="programStatus">Current scene: ${escapeHtml(status.programScene ?? "OBS not connected")}<small>Companion controls are not recorded.</small></div>
+        <section class="preview"><img id="program-preview-frame" aria-label="OBS program preview" alt="Live OBS program preview"></section>
+        <section class="programToolbar" role="toolbar" aria-label="Program controls">
+          <div class="scenes">${APPROVED_SCENES.map((scene) => `<button data-scene="${scene}" ${status.availableScenes.includes(scene) ? "" : "disabled"} class="${scene === status.programScene ? "active" : ""}">${scene}</button>`).join("")}</div>
+          <div class="recordActions"><button disabled title="Safe delete-after-test arrives in a later phase">Test Recording - coming in a later phase</button><button id="start-recording" class="primary" ${allReady && !status.recording ? "" : "disabled"}>Start Live Recording</button><button id="stop-recording" class="danger" ${status.recording ? "" : "disabled"}>Stop</button><button id="full-screen" class="quiet">Full screen</button></div>
+        </section>
+        <div id="fullscreen-hint" class="fullscreenHint" role="status" hidden>Press Esc to exit full screen</div>
       </main>
     </div>`;
 }
@@ -59,18 +61,20 @@ export function wireCompanion(root: Element, api: CompanionWindowAPI) {
     input.value = "";
     safely(api.connect(password));
   });
-  root.querySelector("#full-screen")?.addEventListener("click", () => safely(api.setFullScreen(true)));
-  root.querySelector("#exit-full-screen")?.addEventListener("click", () => safely(api.setFullScreen(false)));
+  root.querySelector("#full-screen")?.addEventListener("click", () => {
+    const hint = root.querySelector<HTMLElement>("#fullscreen-hint");
+    if (hint) {
+      hint.hidden = false;
+      window.setTimeout(() => { hint.hidden = true; }, 4000);
+    }
+    safely(api.setFullScreen(true));
+  });
   root.querySelector("#refresh-readiness")?.addEventListener("click", () => safely(api.refresh()));
   root.querySelector("#start-recording")?.addEventListener("click", () => safely(api.startRecording()));
   root.querySelector("#stop-recording")?.addEventListener("click", () => {
     if (window.confirm("Stop the current OBS recording?")) safely(api.stopRecording());
   });
   root.querySelectorAll<HTMLElement>("[data-scene]").forEach((button) => button.addEventListener("click", () => safely(api.setScene(button.dataset.scene as any))));
-  root.querySelector("#toggle-reel-audio")?.addEventListener("click", () => {
-    const video = root.querySelector<HTMLVideoElement>("video")!;
-    video.muted = !video.muted;
-  });
 }
 
 async function start() {

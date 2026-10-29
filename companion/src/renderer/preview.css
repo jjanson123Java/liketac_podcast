@@ -1,3 +1,7 @@
 .preview { position: relative; overflow: hidden; }
 .preview > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #031f24; }
-.previewStatus { position: relative; z-index: 1; display: grid; gap: 8px; padding: 12px 18px; border-radius: 12px; background: #eaf2eed9; box-shadow: 0 3px 18px #00181d55; }
+.programStatus { display:flex; justify-content:space-between; gap:16px; padding:8px 12px; color:#d9f6f7; background:#0a4650; border:1px solid #ffffff20; border-radius:10px 10px 0 0; font-weight:700; }
+.programStatus small { color:#9ed9dc; font-weight:500; }
+.programToolbar { display:flex; justify-content:center; align-items:center; gap:8px; flex-wrap:wrap; margin-top:10px; padding:8px; background:#0a4650; border:1px solid #ffffff20; border-radius:12px; }
+.programToolbar .scenes,.programToolbar .recordActions { margin-top:0; }
+.fullscreenHint { position:fixed; top:18px; right:18px; z-index:20; padding:12px 18px; border:2px solid #ffd232; border-radius:999px; color:#06343d; background:#fff7cf; box-shadow:0 5px 24px #00181d66; font-weight:800; }
