@@ -9,6 +9,7 @@ await build({ entryPoints: ["src/preload/runtime.ts"], bundle: true, platform: "
 await build({ entryPoints: ["src/renderer/app.ts"], bundle: true, platform: "browser", format: "iife", outfile: "dist/renderer/app.js" });
 await cp("src/renderer/index.html", "dist/renderer/index.html");
 await cp("src/renderer/styles.css", "dist/renderer/styles.css");
+await cp("src/renderer/preview.css", "dist/renderer/preview.css");
 await cp("../public/media/podcast-opener/visual/liketac-banner-hd.png", "dist/renderer/assets/liketac-banner-hd.png");
 await cp("../public/media/podcast-opener/like-tac-podcast-opener.mp4", "dist/renderer/assets/like-tac-podcast-opener.mp4");
 await cp("../public/media/podcast-opener/like-tac-podcast-opener-companion.webm", "dist/renderer/assets/like-tac-podcast-opener-companion.webm");

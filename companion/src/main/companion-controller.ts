@@ -9,6 +9,7 @@ type ControllerClient = {
   stopRecord(): Promise<void>;
   setProgramScene(scene: string): Promise<void>;
   subscribe(event: string, listener: (...args: any[]) => void): unknown;
+  getProgramPreview(): Promise<string>;
 };
 
 type Scheduler = (callback: () => void | Promise<void>, delayMs: number) => unknown;
@@ -21,6 +22,8 @@ export class CompanionController {
     programScene: null, availableScenes: [], readiness: [], error: null,
   };
   private reconnectAttempt = 0;
+  private stateRevision = 0;
+  private snapshotRequest = 0;
 
   constructor(
     private readonly client: ControllerClient,
@@ -45,22 +48,47 @@ export class CompanionController {
   status() { return { ...this.current }; }
 
   async refresh(connection = "connected") {
+    const revision = ++this.stateRevision;
+    const snapshotRequest = ++this.snapshotRequest;
     const [snapshot, obsReadiness, otherReadiness] = await Promise.all([
       this.client.getSnapshot(), this.client.getReadiness(), this.additionalReadiness(),
     ]);
-    this.current = {
+    if (revision !== this.stateRevision) return;
+    const snapshotState = snapshotRequest === this.snapshotRequest ? {
       ...snapshot,
-      connection,
       recordingState: snapshot.recording ? "active" : "inactive",
       recordingStartedAt: snapshot.recording ? this.current.recordingStartedAt ?? new Date().toISOString() : null,
+    } : {};
+    this.current = {
+      ...this.current,
+      ...snapshotState,
+      connection,
       readiness: [...obsReadiness, ...otherReadiness],
       error: null,
     };
   }
 
+  async syncSnapshot() {
+    const revision = this.stateRevision;
+    const snapshotRequest = ++this.snapshotRequest;
+    const snapshot = await this.client.getSnapshot();
+    if (revision !== this.stateRevision || snapshotRequest !== this.snapshotRequest) return this.status();
+    this.current = {
+      ...this.current,
+      ...snapshot,
+      connection: "connected",
+      recordingState: snapshot.recording ? "active" : "inactive",
+      recordingStartedAt: snapshot.recording ? this.current.recordingStartedAt ?? new Date().toISOString() : null,
+      error: null,
+    };
+    return this.status();
+  }
+
+  getProgramPreview() { return this.client.getProgramPreview(); }
+
   async setScene(scene: string) {
     await this.client.setProgramScene(scene);
-    await this.refresh();
+    await this.syncSnapshot();
   }
 
   async startRecording() {
@@ -77,10 +105,12 @@ export class CompanionController {
 
   async stopRecording() {
     await this.client.stopRecord();
-    await this.refresh();
+    await this.syncSnapshot();
   }
 
   recordingEvent(active: boolean, startedAt?: string) {
+    this.stateRevision += 1;
+    this.snapshotRequest += 1;
     this.current = {
       ...this.current,
       recording: active,
@@ -90,8 +120,13 @@ export class CompanionController {
   }
 
   handleDisconnect() {
+    this.stateRevision += 1;
+    this.snapshotRequest += 1;
+    if (!this.config || this.reconnectAttempt >= 5) {
+      this.current = { ...this.current, connection: "disconnected", recordingState: "unknown" };
+      return;
+    }
     this.current = { ...this.current, connection: "reconnecting", recordingState: "unknown" };
-    if (!this.config || this.reconnectAttempt >= 5) return;
     const delay = Math.min(1000 * 2 ** this.reconnectAttempt++, 16000);
     this.schedule(async () => {
       if (!this.config) return;

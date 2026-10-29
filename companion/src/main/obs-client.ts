@@ -65,6 +65,19 @@ export class OBSClient {
     };
   }
 
+  async getProgramPreview() {
+    const scenes = await this.transport.call("GetSceneList");
+    const sceneName = scenes.currentProgramSceneName as string | undefined;
+    if (!sceneName) throw new Error("OBS did not report a current program scene.");
+    const result = await this.transport.call("GetSourceScreenshot", {
+      sourceName: sceneName, imageFormat: "jpeg", imageWidth: 960,
+    });
+    if (typeof result.imageData !== "string" || !result.imageData.startsWith("data:image/jpeg")) {
+      throw new Error("OBS did not return a program preview frame.");
+    }
+    return result.imageData as string;
+  }
+
   async getReadiness() {
     const [sceneResult, inputResult] = await Promise.all([
       this.transport.call("GetSceneList"), this.transport.call("GetInputList"),

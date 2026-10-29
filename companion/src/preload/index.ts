@@ -14,6 +14,8 @@ export function createCompanionAPI(invoke: Invoke, subscribe: Subscribe): Compan
   return Object.freeze({
     connect: (password: string) => invoke("companion:connect", password),
     getStatus: () => invoke("companion:get-status") as Promise<CompanionStatus>,
+    syncStatus: () => invoke("companion:sync-status") as Promise<CompanionStatus>,
+    getProgramPreview: () => invoke("companion:get-program-preview") as Promise<string>,
     refresh: () => invoke("companion:refresh") as Promise<CompanionStatus>,
     launchOBS: () => invoke("companion:launch-obs"),
     setScene: (scene: ApprovedScene) => invoke("companion:set-scene", scene),
