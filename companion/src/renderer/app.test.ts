@@ -1,4 +1,4 @@
-import { fireEvent, screen } from "@testing-library/dom";
+import { fireEvent, screen, within } from "@testing-library/dom";
 import "@testing-library/jest-dom/vitest";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { renderCompanion, statusChanged, wireCompanion } from "./app";
@@ -36,7 +36,7 @@ describe("Like TAC Companion workspace", () => {
     expect(screen.getByRole("button", { name: "Start Live Recording" })).toBeDisabled();
   });
 
-  test("shows actual LIVE state, elapsed time, scene choices, asset previews, and disabled test recording", () => {
+  test("shows actual LIVE state, elapsed time, scene choices, and disabled test recording", () => {
     renderCompanion(document.querySelector("#app")!, {
       ...baseStatus,
       recording: true,
@@ -47,9 +47,8 @@ describe("Like TAC Companion workspace", () => {
     expect(screen.getByText("01:05")).toBeVisible();
     expect(screen.getByText("OBS - LikeTACLive")).toHaveClass("recordingPulse");
     expect(screen.getByRole("button", { name: "Test Recording - coming in a later phase" })).toBeDisabled();
-    expect(screen.getByAltText("Like TAC banner preview")).toHaveAttribute("src", "assets/liketac-banner-hd.png");
-    expect(screen.getByLabelText("Like TAC opening reel preview")).toHaveAttribute("src", "assets/like-tac-podcast-opener-companion.webm");
-    expect(screen.getByRole("button", { name: "Mute or unmute opening reel preview" })).toBeVisible();
+    expect(screen.queryByAltText("Like TAC banner preview")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Like TAC opening reel preview")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "50 - Host Presentation" })).toBeVisible();
     expect(screen.getByRole("button", { name: "Start Live Recording" })).toBeDisabled();
   });
@@ -60,7 +59,7 @@ describe("Like TAC Companion workspace", () => {
     expect(screen.getByRole("button", { name: "Connect to OBS" })).toBeVisible();
   });
 
-  test("wires full-screen and clears the password immediately after connect", async () => {
+  test("puts full-screen in the program toolbar, shows the Escape hint, and clears the password after connect", async () => {
     const api = {
       connect: vi.fn(async () => undefined), setFullScreen: vi.fn(async () => undefined),
       getStatus: vi.fn(async () => baseStatus), onStatus: vi.fn(() => () => undefined),
@@ -72,15 +71,23 @@ describe("Like TAC Companion workspace", () => {
     fireEvent.click(screen.getByRole("button", { name: "Connect to OBS" }));
     await vi.waitFor(() => expect(api.connect).toHaveBeenCalledWith("super-secret"));
     expect(password.value).toBe("");
-    fireEvent.click(screen.getByRole("button", { name: "Full screen" }));
+    const toolbar = screen.getByRole("toolbar", { name: "Program controls" });
+    fireEvent.click(within(toolbar).getByRole("button", { name: "Full screen" }));
     expect(api.setFullScreen).toHaveBeenCalledWith(true);
-    fireEvent.click(screen.getByRole("button", { name: "Exit full screen" }));
-    expect(api.setFullScreen).toHaveBeenCalledWith(false);
+    expect(screen.getByRole("status")).toHaveTextContent("Press Esc to exit full screen");
+    expect(screen.queryByRole("button", { name: "Exit full screen" })).not.toBeInTheDocument();
   });
 
   test("renders an OBS program preview surface", () => {
     renderCompanion(document.querySelector("#app")!, baseStatus, new Date());
-    expect(screen.getByLabelText("OBS program preview")).toBeVisible();
+    const preview = screen.getByLabelText("OBS program preview");
+    expect(preview).toBeVisible();
+    expect(preview.closest(".preview")?.querySelector(".previewStatus")).toBeNull();
+    expect(screen.getByText("Current scene: 00 - Standby")).toHaveClass("programStatus");
+    const toolbar = screen.getByRole("toolbar", { name: "Program controls" });
+    expect(within(toolbar).getByRole("button", { name: "50 - Host Presentation" })).toBeVisible();
+    expect(within(toolbar).getByRole("button", { name: "Start Live Recording" })).toBeVisible();
+    expect(within(toolbar).getByRole("button", { name: "Full screen" })).toBeVisible();
   });
 
   test("does not rebuild stable controls during timer polling", () => {
