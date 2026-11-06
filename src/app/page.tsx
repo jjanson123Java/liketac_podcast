@@ -4,7 +4,7 @@ export default function HomePage() {
   return (
     <main>
       <section className="hero">
-        <div>
+        <div className="heroEditorial">
           <span className="kicker">Tech talk without the tech headache</span>
           <h1>Serious tech.<br /><span>For the rest of us.</span></h1>
           <p className="heroCopy">Relaxed conversations that turn complicated technology into useful ideas anyone can understand—and maybe laugh at along the way.</p>
@@ -14,9 +14,9 @@ export default function HomePage() {
           </div>
         </div>
         <article className="featuredEpisode">
-          <div className="episodeArtwork" aria-hidden="true"><span>🎙️</span></div>
-          <h2>“Wait… what does the cloud actually do?”</h2>
-          <p>Like TAC Podcast · Illustrative Episode 01 · 32 min</p>
+          <div className="episodeArtwork" aria-hidden="true"><img src="/brand/studio-cover.svg" alt="" width="720" height="660" /></div>
+          <div className="featuredCaption"><span className="eyebrow">A little curiosity goes a long way</span><h2>“Wait… what does the cloud actually do?”</h2>
+          <p>Like TAC Podcast · Illustrative Episode 01 · 32 min</p></div>
         </article>
       </section>
       <section className="audience" id="audience">

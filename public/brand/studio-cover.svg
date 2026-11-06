@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="660" viewBox="0 0 720 660" fill="none">
+<defs>
+<linearGradient id="bg" x2="720" y2="660" gradientUnits="userSpaceOnUse"><stop stop-color="#0a5964"/><stop offset=".6" stop-color="#002c34"/><stop offset="1" stop-color="#001a22"/></linearGradient>
+<linearGradient id="metal"><stop stop-color="#032b34"/><stop offset=".28" stop-color="#95bac0"/><stop offset=".45" stop-color="#ecf5ed"/><stop offset=".65" stop-color="#486c76"/><stop offset="1" stop-color="#0b2b34"/></linearGradient>
+<linearGradient id="gold" x2="1" y2="1"><stop stop-color="#ffe77c"/><stop offset="1" stop-color="#eeb500"/></linearGradient>
+<radialGradient id="glow"><stop stop-color="#00b8c8" stop-opacity=".5"/><stop offset="1" stop-color="#00b8c8" stop-opacity="0"/></radialGradient>
+<pattern id="grid" width="36" height="36" patternUnits="userSpaceOnUse"><path d="M36 0H0V36" stroke="#8fd9d6" stroke-opacity=".07"/></pattern>
+<pattern id="grille" width="8" height="18" patternUnits="userSpaceOnUse"><path d="M0 3H8" stroke="#b6d3cf" stroke-width="3"/><path d="M0 9H8" stroke="#001e28" stroke-width="5"/></pattern>
+<filter id="shadow" x="-60%" y="-30%" width="220%" height="180%"><feDropShadow dx="0" dy="22" stdDeviation="16" flood-color="#000" flood-opacity=".5"/></filter>
+</defs>
+<path fill="url(#bg)" d="M0 0h720v660H0z"/><path fill="url(#grid)" d="M0 0h720v660H0z"/>
+<circle cx="485" cy="125" r="195" fill="url(#gold)"/><ellipse cx="270" cy="500" rx="390" ry="200" fill="url(#glow)"/>
+<g stroke="#38bfca" stroke-opacity=".45">
+<path d="M-60 550C110 330 230 655 425 458S660 360 780 405"/><path d="M-60 564C110 344 230 669 425 472S660 374 780 419"/><path d="M-60 578C110 358 230 683 425 486S660 388 780 433"/><path d="M-60 592C110 372 230 697 425 500S660 402 780 447"/><path d="M-60 606C110 386 230 711 425 514S660 416 780 461"/><path d="M-60 620C110 400 230 725 425 528S660 430 780 475"/><path d="M-60 634C110 414 230 739 425 542S660 444 780 489"/>
+</g>
+<g fill="#f6f3e9" font-family="Arial, sans-serif" font-weight="900" font-style="italic" font-size="106" letter-spacing="-8"><text x="44" y="143">LIKE</text><text x="44" y="240">TAC</text></g>
+<path d="m74 280-19 58h14l19-58" fill="#ffd232"/>
+<g fill="#f6f3e9" font-family="Arial, sans-serif" font-size="15" font-weight="700" letter-spacing="4"><text x="104" y="295">SERIOUS TECH.</text><text x="104" y="323">FOR THE REST OF US.</text></g>
+<g filter="url(#shadow)" transform="rotate(15 500 320)">
+<rect x="416" y="158" width="158" height="268" rx="79" fill="url(#metal)"/>
+<rect x="429" y="176" width="132" height="220" rx="66" fill="#03232b"/>
+<rect x="435" y="180" width="120" height="208" rx="60" fill="url(#grille)"/>
+<path d="M495 180v208" stroke="url(#metal)" stroke-width="11"/>
+<path d="M397 315v54a98 98 0 0 0 196 0v-54" stroke="url(#metal)" stroke-width="15"/>
+<path d="M495 467v88" stroke="url(#metal)" stroke-width="22"/><ellipse cx="495" cy="560" rx="82" ry="14" fill="url(#metal)"/>
+<rect x="480" y="403" width="30" height="9" rx="4" fill="#ffd232"/>
+</g>
+<path d="M40 604h640" stroke="#b2e8e3" stroke-opacity=".3"/><g fill="#e6f3ef" font-family="Arial, sans-serif" font-size="12" letter-spacing="3"><text x="42" y="632">RELAXED CONVERSATIONS. USEFUL IDEAS.</text></g>
+</svg>
