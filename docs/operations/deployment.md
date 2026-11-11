@@ -22,7 +22,7 @@ Runtime requires `IDENTITY_DATABASE_URL`, `CONTENT_DATABASE_URL`, `BLOB_READ_WRI
 1. Confirm the intended Vercel target with `vercel project inspect --non-interactive`.
 2. Run `npm ci`, `npm test`, `npm run test:e2e`, `npm run build`, and `npm audit --omit=dev`.
 3. Pull environment variables without printing values.
-4. Apply identity and content migrations separately.
+4. Apply identity and content migrations separately, including the short-lived Companion upload handoff table.
 5. Run the idempotent administrator bootstrap and content seed scripts.
 6. Deploy a preview and verify visitor, subscriber, administrator, media, Help, mobile, and theme journeys.
 7. Stage a production deployment without assigning domains, repeat smoke tests, then promote that exact deployment.
@@ -41,4 +41,4 @@ Drizzle does not automatically read `.env.local`; load the environment into the 
 
 ## Content operations
 
-Full audio/video, teasers, captions, and transcripts are private Blob objects. Neon stores only catalog/security metadata and object paths. Subscriber-only archive episodes cannot publish without full media and a teaser.
+Full audio/video, generated previews, captions, and transcripts are private Blob objects. Neon stores only catalog/security metadata, object paths, and hashed short-lived handoff state. Start Here is fully playable for visitors. Protected episodes expose only a generated preview; when a direct website upload has no preview, visitors receive a locked branded card. Full protected media must never be used as the visitor preview.

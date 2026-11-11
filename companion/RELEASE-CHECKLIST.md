@@ -38,3 +38,13 @@ The phase-one installer is unsigned. Windows may display an Unknown Publisher wa
 - [ ] Uninstall Companion and confirm the `liketac` protocol registration and installed application are removed.
 - [ ] Confirm OBS profiles, scenes, and recordings remain untouched after uninstall.
 
+## Automatic episode preview
+
+- [ ] Launch an upload only from the intended administrator draft and confirm the handoff expires after ten minutes.
+- [ ] Select one completed video and verify preparation, full upload, and preview upload progress independently.
+- [ ] Verify FFprobe reports the derivative at no more than 45.1 seconds with H.264/AAC for video or a browser-playable audio format for audio-only media.
+- [ ] Confirm NVIDIA NVENC is used when available and CPU encoding succeeds when NVENC is unavailable.
+- [ ] Cancel during preparation and confirm the source is unchanged and temporary output is removed.
+- [ ] Interrupt preview upload after full upload, then Retry and confirm the full media is not uploaded again.
+- [ ] Confirm RunPod is never contacted and no permanent Vercel, Blob, Neon, session, or OBS credential appears in renderer text or logs.
+
