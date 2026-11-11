@@ -39,3 +39,9 @@ test("explains when no file reaches the upload handler", async () => {
   expect(await screen.findByText("Choose a media file before uploading.")).toBeInTheDocument();
   expect(uploadMock).not.toHaveBeenCalled();
 });
+
+test("marks direct upload as a locked fallback and does not ask for a manual teaser", () => {
+  render(<AdminMediaUpload episodeId="episode-1" />);
+  expect(screen.getByText(/locked for visitors until Companion creates a preview/i)).toBeVisible();
+  expect(screen.queryByRole("option", { name: /45-second teaser/i })).not.toBeInTheDocument();
+});

@@ -49,4 +49,16 @@ describe("EpisodeCard", () => {
 
     expect(container.querySelector("video")).toHaveAttribute("src", "/api/media/video-1");
   });
+
+  test("locks protected visitor content when no generated teaser exists", () => {
+    const { container } = render(<EpisodeCard episode={{ slug: "protected", title: "Protected episode", summary: "Members only", publishedAt: new Date(), isStartHere: false, isCurrent: false, access: "teaser", hasMedia: true, previewMediaId: null }} />);
+    expect(container.querySelector("video, audio")).toBeNull();
+    expect(screen.getByText(/Preview being prepared/i)).toBeVisible();
+    expect(screen.getByRole("link", { name: "Subscribe Free to Watch" })).toHaveAttribute("href", "/signup");
+  });
+
+  test("sends a protected visitor with a teaser to the episode sign-in gate", () => {
+    render(<EpisodeCard episode={{ slug: "protected", title: "Protected episode", summary: "Members only", publishedAt: new Date(), isStartHere: false, isCurrent: false, access: "teaser", hasMedia: true, previewMediaId: "teaser-1" }} />);
+    expect(screen.getByRole("link", { name: "Watch 45-second preview" })).toHaveAttribute("href", "/shows/protected");
+  });
 });
