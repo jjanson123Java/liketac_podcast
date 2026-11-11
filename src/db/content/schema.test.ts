@@ -1,7 +1,7 @@
 import { getTableConfig } from "drizzle-orm/pg-core";
 import { describe, expect, it } from "vitest";
 
-import { categories, episodes, mediaVariants } from "./schema";
+import { categories, companionUploadHandoffs, episodes, mediaVariants } from "./schema";
 
 describe("content database schema", () => {
   it("models categories and publishable episodes without identity foreign keys", () => {
@@ -27,5 +27,19 @@ describe("content database schema", () => {
       expect.arrayContaining(["episode_id", "kind", "object_key", "mime_type", "duration_seconds"]),
     );
     expect(columns).not.toContain("media_bytes");
+  });
+
+  it("stores only hashed short-lived Companion upload credentials", () => {
+    const columns = getTableConfig(companionUploadHandoffs).columns.map((column) => column.name);
+    expect(columns).toEqual(expect.arrayContaining([
+      "episode_id",
+      "admin_user_id",
+      "secret_hash",
+      "expires_at",
+      "full_claimed_at",
+      "teaser_claimed_at",
+      "cancelled_at",
+    ]));
+    expect(columns).not.toContain("secret");
   });
 });

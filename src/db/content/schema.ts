@@ -56,3 +56,21 @@ export const mediaVariants = pgTable("media_variants", {
   index("media_variants_episode_idx").on(table.episodeId),
   uniqueIndex("media_variants_object_key_idx").on(table.objectKey),
 ]);
+
+export const companionUploadHandoffs = pgTable("companion_upload_handoffs", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  episodeId: uuid("episode_id").notNull().references(() => episodes.id),
+  adminUserId: uuid("admin_user_id").notNull(),
+  secretHash: text("secret_hash").notNull().unique(),
+  fullRole: text("full_role"),
+  fullClaimedAt: timestamp("full_claimed_at", { withTimezone: true }),
+  fullCompletedAt: timestamp("full_completed_at", { withTimezone: true }),
+  teaserClaimedAt: timestamp("teaser_claimed_at", { withTimezone: true }),
+  teaserCompletedAt: timestamp("teaser_completed_at", { withTimezone: true }),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index("companion_upload_handoffs_episode_idx").on(table.episodeId),
+  index("companion_upload_handoffs_expiry_idx").on(table.expiresAt),
+]);
