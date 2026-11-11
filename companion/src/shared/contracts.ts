@@ -20,6 +20,7 @@ export type CompanionStatus = {
   availableScenes: readonly ApprovedScene[];
   error?: string | null;
   readiness?: Array<{ id: string; label: string; ready: boolean; reason: string | null }>;
+  mediaUpload?: MediaUploadStatus | null;
 };
 
 export type MediaProbe = {
@@ -36,4 +37,13 @@ export type GeneratedPreview = {
   kind: "video" | "audio";
   durationSeconds: number;
   encoder: "nvenc" | "cpu" | "aac";
+};
+
+export type MediaUploadStatus = {
+  phase: "idle" | "selecting" | "preparing" | "uploading-full" | "uploading-preview" | "complete" | "failed" | "cancelled";
+  preparationProgress: number;
+  fullProgress: number;
+  previewProgress: number;
+  sourceName: string | null;
+  error: string | null;
 };

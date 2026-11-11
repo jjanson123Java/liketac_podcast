@@ -16,6 +16,8 @@ export function renderCompanion(root: Element, status: CompanionStatus, now = ne
   const collectionReady = status.sceneCollection === "LikeTACLive Studio";
   const checks = status.readiness ?? [];
   const allReady = status.connection === "connected" && profileReady && collectionReady && checks.length > 0 && checks.every((item) => item.ready);
+  const mediaUpload = status.mediaUpload;
+  const uploadActive = mediaUpload && ["selecting", "preparing", "uploading-full", "uploading-preview"].includes(mediaUpload.phase);
   root.innerHTML = `
     <header class="topbar"><div><strong>Like TAC Companion</strong><span id="obs-profile" class="${status.recording ? "recordingPulse" : ""}">OBS - LikeTACLive</span></div><div class="liveState">${status.recording ? `<b>LIVE</b><time>${elapsed(status.recordingStartedAt, now)}</time>` : "Ready when you are"}</div></header>
     <div class="workspace">
@@ -31,6 +33,7 @@ export function renderCompanion(root: Element, status: CompanionStatus, now = ne
           <p class="check ${collectionReady ? "good" : "bad"}">${collectionReady ? "Scene collection ready" : "Required scene collection: LikeTACLive Studio"}</p>
         </section>
         <section><h2>Devices and sources</h2><button id="refresh-readiness" class="quiet" ${status.connection === "connected" ? "" : "disabled"}>Run readiness checks</button>${checks.length ? checks.map((item) => `<div class="device ${item.ready ? "good" : "bad"}"><strong>${escapeHtml(item.label)}</strong><span>${item.ready ? "Ready" : escapeHtml(item.reason ?? "Check required")}</span></div>`).join("") : "<p>Connect to OBS, speak into the microphone, then run readiness checks.</p>"}</section>
+        ${mediaUpload ? `<section class="mediaUpload"><h2>Publish episode</h2><p>${mediaUpload.sourceName ? escapeHtml(mediaUpload.sourceName) : "Choose one completed audio or video recording. Companion creates the 45-second preview locally."}</p><p class="state">${escapeHtml(mediaUpload.phase.replaceAll("-", " "))}</p>${mediaUpload.error ? `<p class="connectionError" role="alert">${escapeHtml(mediaUpload.error)}</p>` : ""}<label>Prepare preview<progress max="100" value="${mediaUpload.preparationProgress}"></progress></label><label>Upload full episode<progress max="100" value="${mediaUpload.fullProgress}"></progress></label><label>Upload preview<progress max="100" value="${mediaUpload.previewProgress}"></progress></label><div class="connectionActions">${mediaUpload.phase === "failed" ? '<button id="retry-media-upload" class="primary">Retry upload</button>' : `<button id="start-media-upload" class="primary" ${uploadActive || mediaUpload.phase === "complete" ? "disabled" : ""}>Choose completed episode</button>`}${uploadActive ? '<button id="cancel-media-upload" class="danger">Cancel upload</button>' : ""}</div></section>` : ""}
       </aside>
       <main class="stage">
         <div class="programStatus">Current scene: ${escapeHtml(status.programScene ?? "OBS not connected")}<small>Companion controls are not recorded.</small></div>
@@ -75,6 +78,9 @@ export function wireCompanion(root: Element, api: CompanionWindowAPI) {
     safely(api.setFullScreen(true));
   });
   root.querySelector("#refresh-readiness")?.addEventListener("click", () => safely(api.refresh()));
+  root.querySelector("#start-media-upload")?.addEventListener("click", () => safely(api.startMediaUpload()));
+  root.querySelector("#retry-media-upload")?.addEventListener("click", () => safely(api.retryMediaUpload()));
+  root.querySelector("#cancel-media-upload")?.addEventListener("click", () => safely(api.cancelMediaUpload()));
   root.querySelector("#start-recording")?.addEventListener("click", () => safely(api.startRecording()));
   root.querySelector("#stop-recording")?.addEventListener("click", () => {
     if (window.confirm("Stop the current OBS recording?")) safely(api.stopRecording());

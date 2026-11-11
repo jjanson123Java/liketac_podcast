@@ -13,6 +13,9 @@ export type CompanionWindowAPI = {
   startRecording(): Promise<unknown>;
   stopRecording(): Promise<unknown>;
   setFullScreen(enabled: boolean): Promise<unknown>;
+  startMediaUpload(): Promise<unknown>;
+  retryMediaUpload(): Promise<unknown>;
+  cancelMediaUpload(): Promise<unknown>;
   requestClose(choice: "cancel" | "leave-recording" | "stop-recording"): Promise<unknown>;
   onStatus(listener: (status: CompanionStatus) => void): () => void;
 };

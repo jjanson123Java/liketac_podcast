@@ -1,5 +1,7 @@
 import { app, BrowserWindow, dialog, ipcMain, safeStorage } from "electron";
-import { access } from "node:fs/promises";
+import { openAsBlob } from "node:fs";
+import { access, mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { execFile, spawn } from "node:child_process";
 import { promisify } from "node:util";
@@ -10,16 +12,49 @@ import { AssetReadinessService } from "./asset-readiness";
 import { CredentialStore } from "./credential-store";
 import { createOBSClient } from "./obs-client";
 import { OBSLauncher } from "./obs-launcher";
+import { MediaUploadJob } from "./media-upload-job";
+import { probeMedia } from "./media-probe";
+import { generatePreview } from "./preview-generator";
 import { WindowsDeviceProbe } from "./windows-device-probe";
-import { allowedRendererNavigation, parseCompanionLaunch, resolveCloseAction } from "./protocol";
+import { allowedRendererNavigation, parseCompanionLaunch, parseUploadLaunch, resolveCloseAction, type UploadLaunch } from "./protocol";
 import type { ApprovedScene } from "../shared/contracts";
+import { upload } from "@vercel/blob/client";
 
 let mainWindow: BrowserWindow | null = null;
 let service: CompanionApplication;
 let allowClose = false;
+let pendingUploadLaunch: UploadLaunch | null = process.argv.map(parseUploadLaunch).find(Boolean) ?? null;
 
 function broadcastStatus() {
   mainWindow?.webContents.send("companion:status", service.status());
+}
+
+function installUploadJob(launch: UploadLaunch) {
+  const job = new MediaUploadJob(launch, {
+    selectFile: async () => {
+      if (!mainWindow) return null;
+      const result = await dialog.showOpenDialog(mainWindow, { title: "Choose the completed Like TAC episode", properties: ["openFile"], filters: [{ name: "Podcast media", extensions: ["mp4", "webm", "mp3", "m4a", "wav"] }] });
+      return result.canceled ? null : result.filePaths[0] ?? null;
+    },
+    makeTempDirectory: () => mkdtemp(join(tmpdir(), "liketac-preview-")),
+    probe: (sourcePath) => probeMedia(sourcePath),
+    generate: (input) => generatePreview(input),
+    upload: async ({ origin, episodeId, secret, role, sourcePath, originalFilename, onProgress }) => {
+      const safeName = originalFilename.replace(/[^A-Za-z0-9._-]/g, "-");
+      const body = await openAsBlob(sourcePath);
+      await upload(`episodes/${episodeId}/${role}-${safeName}`, body, {
+        access: "private",
+        handleUploadUrl: `${origin}/api/admin/podcasts/upload`,
+        headers: { authorization: `Bearer ${secret}` },
+        clientPayload: JSON.stringify({ episodeId, role, originalFilename }),
+        multipart: body.size > 50_000_000,
+        onUploadProgress: ({ percentage }) => onProgress(Math.round(percentage)),
+      });
+    },
+    cleanup: (path) => rm(path, { recursive: true, force: true }),
+  }, broadcastStatus);
+  service.setMediaUploadJob(job);
+  broadcastStatus();
 }
 
 function registerHandlers() {
@@ -49,6 +84,9 @@ function registerHandlers() {
     const result = await service.stopRecording(true); broadcastStatus(); return result;
   });
   ipcMain.handle("companion:set-full-screen", (_event, enabled: boolean) => mainWindow?.setFullScreen(enabled));
+  ipcMain.handle("companion:start-media-upload", async () => { try { return await service.startMediaUpload(); } finally { broadcastStatus(); } });
+  ipcMain.handle("companion:retry-media-upload", async () => { try { return await service.retryMediaUpload(); } finally { broadcastStatus(); } });
+  ipcMain.handle("companion:cancel-media-upload", async () => { try { return await service.cancelMediaUpload(); } finally { broadcastStatus(); } });
   ipcMain.handle("companion:request-close", async (_event, choice: "cancel" | "leave-recording" | "stop-recording") => {
     const action = resolveCloseAction({ recording: Boolean(service.status().recording), choice });
     if (action === "cancel") return { closed: false };
@@ -107,14 +145,16 @@ if (!app.requestSingleInstanceLock()) app.quit();
 else {
   app.setAsDefaultProtocolClient("liketac");
   app.on("second-instance", (_event, argv) => {
-    if (!argv.some((value) => parseCompanionLaunch(value) === "recording")) return;
+    const uploadLaunch = argv.map(parseUploadLaunch).find(Boolean);
+    if (!uploadLaunch && !argv.some((value) => parseCompanionLaunch(value) === "recording")) return;
     if (!mainWindow) mainWindow = createWindow();
     if (mainWindow.isMinimized()) mainWindow.restore();
     mainWindow.focus();
+    if (uploadLaunch && service) installUploadJob(uploadLaunch);
   });
   void app.whenReady().then(() => {
     const protocolArguments = process.argv.filter((value) => value.toLowerCase().startsWith("liketac:"));
-    if (protocolArguments.length && !protocolArguments.some((value) => parseCompanionLaunch(value) === "recording")) {
+    if (protocolArguments.length && !protocolArguments.some((value) => parseCompanionLaunch(value) === "recording" || parseUploadLaunch(value))) {
       app.quit();
       return;
     }
@@ -155,6 +195,7 @@ else {
       spawn: (executable, arguments_, options) => spawn(executable, arguments_, { cwd: options.cwd, windowsHide: options.windowsHide, detached: false }),
     });
     service = new CompanionApplication(controller, credentials, launcher);
+    if (pendingUploadLaunch) { installUploadJob(pendingUploadLaunch); pendingUploadLaunch = null; }
     client.subscribe("RecordStateChanged", (event: { outputActive?: boolean }) => {
       service.recordingEvent(Boolean(event.outputActive), event.outputActive ? new Date().toISOString() : undefined);
       broadcastStatus();

@@ -29,4 +29,19 @@ describe("CompanionApplication", () => {
     expect(launcher.closeLaunched).toHaveBeenCalledOnce();
     expect(controller.disconnect).toHaveBeenCalledOnce();
   });
+
+  test("keeps media upload status separate from OBS and delegates start, retry, and cancel", async () => {
+    const controller = { status: vi.fn(() => ({ connection: "disconnected" })) };
+    const uploadJob = {
+      publicStatus: vi.fn(() => ({ phase: "idle" })),
+      start: vi.fn(async () => undefined), retry: vi.fn(async () => undefined), cancel: vi.fn(async () => undefined),
+    };
+    const app = new CompanionApplication(controller as any, {} as any, {} as any);
+    app.setMediaUploadJob(uploadJob as any);
+    expect(app.status()).toMatchObject({ connection: "disconnected", mediaUpload: { phase: "idle" } });
+    await app.startMediaUpload(); await app.retryMediaUpload(); await app.cancelMediaUpload();
+    expect(uploadJob.start).toHaveBeenCalledOnce();
+    expect(uploadJob.retry).toHaveBeenCalledOnce();
+    expect(uploadJob.cancel).toHaveBeenCalledOnce();
+  });
 });

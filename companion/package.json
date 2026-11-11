@@ -10,6 +10,7 @@
     "test": "vitest run src"
   },
   "dependencies": {
+    "@vercel/blob": "^2.4.0",
     "obs-websocket-js": "^5.0.8"
   },
   "devDependencies": {

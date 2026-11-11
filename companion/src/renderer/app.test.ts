@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { fireEvent, screen, within } from "@testing-library/dom";
 import "@testing-library/jest-dom/vitest";
 import { beforeEach, describe, expect, test, vi } from "vitest";
@@ -128,5 +129,18 @@ describe("Like TAC Companion workspace", () => {
     fireEvent.click(screen.getByRole("button", { name: "Run readiness checks" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Readiness check failed.");
+  });
+
+  test("shows upload progress and never renders the handoff secret", async () => {
+    const api = { startMediaUpload: vi.fn(async () => undefined) } as unknown as CompanionWindowAPI;
+    renderCompanion(document.querySelector("#app")!, {
+      ...baseStatus,
+      mediaUpload: { phase: "idle", preparationProgress: 0, fullProgress: 0, previewProgress: 0, sourceName: null, error: null },
+    }, new Date());
+    wireCompanion(document.querySelector("#app")!, api);
+    expect(screen.getByRole("heading", { name: "Publish episode" })).toBeVisible();
+    expect(document.body).not.toHaveTextContent("abcdefghijklmnopqrstuvwxyzABCDEFGH123456");
+    fireEvent.click(screen.getByRole("button", { name: "Choose completed episode" }));
+    await vi.waitFor(() => expect(api.startMediaUpload).toHaveBeenCalledOnce());
   });
 });

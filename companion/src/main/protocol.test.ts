@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { allowedRendererNavigation, parseCompanionLaunch, resolveCloseAction } from "./protocol";
+import { allowedRendererNavigation, parseCompanionLaunch, parseUploadLaunch, resolveCloseAction } from "./protocol";
 
 describe("Like TAC protocol security", () => {
   test.each(["liketac://recording", "LIKETAC://recording"])("accepts the exact recording action: %s", (url) => {
@@ -12,6 +12,21 @@ describe("Like TAC protocol security", () => {
   ])("rejects unapproved launch input: %s", (url) => {
     expect(parseCompanionLaunch(url)).toBeNull();
   });
+
+  test("strictly parses a Like TAC upload handoff without rendering its secret", () => {
+    expect(parseUploadLaunch("liketac://prepare-upload?origin=https%3A%2F%2Fliketac.live&episodeId=86420552-d588-449f-a5ba-3ecac12bf373&secret=abcdefghijklmnopqrstuvwxyzABCDEFGH123456")).toEqual({
+      origin: "https://liketac.live",
+      episodeId: "86420552-d588-449f-a5ba-3ecac12bf373",
+      secret: "abcdefghijklmnopqrstuvwxyzABCDEFGH123456",
+    });
+  });
+
+  test.each([
+    "liketac://prepare-upload?origin=https%3A%2F%2Fevil.example&episodeId=86420552-d588-449f-a5ba-3ecac12bf373&secret=abcdefghijklmnopqrstuvwxyzABCDEFGH123456",
+    "liketac://prepare-upload?origin=https%3A%2F%2Fliketac.live&episodeId=not-a-uuid&secret=abcdefghijklmnopqrstuvwxyzABCDEFGH123456",
+    "liketac://prepare-upload?origin=https%3A%2F%2Fliketac.live&episodeId=86420552-d588-449f-a5ba-3ecac12bf373&secret=short",
+    "liketac://prepare-upload/extra?origin=https%3A%2F%2Fliketac.live&episodeId=86420552-d588-449f-a5ba-3ecac12bf373&secret=abcdefghijklmnopqrstuvwxyzABCDEFGH123456",
+  ])("rejects an unsafe upload launch: %s", (url) => expect(parseUploadLaunch(url)).toBeNull());
 
   test("allows only the packaged renderer URL", () => {
     const packaged = "file:///C:/Program%20Files/Like%20TAC%20Companion/resources/app/renderer/index.html";
