@@ -130,4 +130,15 @@ describe("Companion upload handoffs", () => {
     await expect(claimUploadRoleWithAttempt(input, { store, now })).resolves.toBeTruthy();
     await expect(claimUploadRoleWithAttempt(input, { store, now })).resolves.toBeTruthy();
   });
+
+  test("rejects a replacement token when the same attempt changes the full-media role", async () => {
+    const { store } = memoryStore();
+    const now = new Date("2026-11-11T12:00:00Z");
+    const handoff = await createUploadHandoff({ episodeId: "episode-1", adminUserId: "admin-1" }, { store, now });
+    const attemptId = crypto.randomUUID();
+    await claimUploadRoleWithAttempt({ secret: handoff.secret, episodeId: "episode-1", role: "video", attemptId }, { store, now });
+    await expect(
+      claimUploadRoleWithAttempt({ secret: handoff.secret, episodeId: "episode-1", role: "audio", attemptId }, { store, now }),
+    ).rejects.toThrow("UPLOAD_ROLE_MISMATCH");
+  });
 });

@@ -143,7 +143,10 @@ export async function claimUploadRole(
   if (input.role === "teaser" ? record.teaserCompletedAt : record.fullCompletedAt) throw new Error("UPLOAD_ROLE_ALREADY_COMPLETED");
   const claimedAt = input.role === "teaser" ? record.teaserClaimedAt : record.fullClaimedAt;
   const claimedAttemptId = input.role === "teaser" ? record.teaserAttemptId : record.fullAttemptId;
-  if (claimedAt && claimedAttemptId === input.attemptId) return record;
+  if (claimedAt && claimedAttemptId === input.attemptId) {
+    if (input.role !== "teaser" && record.fullRole !== input.role) throw new Error("UPLOAD_ROLE_MISMATCH");
+    return record;
+  }
   if (claimedAt) throw new Error("UPLOAD_ROLE_ALREADY_CLAIMED");
   const claimed = await store.claim(record.id, input.role, input.attemptId, now);
   if (!claimed) throw new Error("UPLOAD_ROLE_ALREADY_CLAIMED");
