@@ -21,3 +21,19 @@ export type CompanionStatus = {
   error?: string | null;
   readiness?: Array<{ id: string; label: string; ready: boolean; reason: string | null }>;
 };
+
+export type MediaProbe = {
+  sourcePath: string;
+  kind: "video" | "audio";
+  durationSeconds: number;
+  hasVideo: boolean;
+  hasAudio: boolean;
+  formatName: string | null;
+};
+
+export type GeneratedPreview = {
+  outputPath: string;
+  kind: "video" | "audio";
+  durationSeconds: number;
+  encoder: "nvenc" | "cpu" | "aac";
+};
