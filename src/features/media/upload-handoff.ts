@@ -135,11 +135,29 @@ export async function claimUploadRole(
   dependencies: Dependencies = {},
 ) {
   const { record, store, now } = await findBoundHandoff(input, dependencies);
+  if (input.role === "teaser" && !record.fullRole) throw new Error("UPLOAD_FULL_ROLE_REQUIRED");
   if (input.role === "teaser" ? record.teaserCompletedAt : record.fullCompletedAt) throw new Error("UPLOAD_ROLE_ALREADY_COMPLETED");
   if (input.role === "teaser" ? record.teaserClaimedAt : record.fullClaimedAt) throw new Error("UPLOAD_ROLE_ALREADY_CLAIMED");
   const claimed = await store.claim(record.id, input.role, now);
   if (!claimed) throw new Error("UPLOAD_ROLE_ALREADY_CLAIMED");
   return claimed;
+}
+
+export async function completeClaimedUploadRole(
+  input: { id: string; episodeId: string; role: UploadHandoffRole },
+  dependencies: Dependencies = {},
+) {
+  const { store, now } = deps(dependencies);
+  const record = await store.findById(input.id);
+  if (!record || record.episodeId !== input.episodeId || record.cancelledAt) throw new Error("INVALID_UPLOAD_HANDOFF");
+  if (input.role !== "teaser" && record.fullRole !== input.role) throw new Error("UPLOAD_ROLE_MISMATCH");
+  const completedAt = input.role === "teaser" ? record.teaserCompletedAt : record.fullCompletedAt;
+  if (completedAt) return record;
+  const claimedAt = input.role === "teaser" ? record.teaserClaimedAt : record.fullClaimedAt;
+  if (!claimedAt) throw new Error("UPLOAD_ROLE_NOT_CLAIMED");
+  const completed = await store.complete(record.id, input.role, now);
+  if (!completed) throw new Error("UPLOAD_ROLE_ALREADY_COMPLETED");
+  return completed;
 }
 
 export async function completeUploadRole(

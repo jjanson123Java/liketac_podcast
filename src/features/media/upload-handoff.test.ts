@@ -75,6 +75,7 @@ describe("Companion upload handoffs", () => {
 
     await expect(claimUploadRole({ secret: handoff.secret, episodeId: "episode-2", role: "video" }, { store, now })).rejects.toThrow("INVALID_UPLOAD_HANDOFF");
     await expect(claimUploadRole({ secret: "wrong", episodeId: "episode-1", role: "video" }, { store, now })).rejects.toThrow("INVALID_UPLOAD_HANDOFF");
+    await expect(claimUploadRole({ secret: handoff.secret, episodeId: "episode-1", role: "teaser" }, { store, now })).rejects.toThrow("UPLOAD_FULL_ROLE_REQUIRED");
     await expect(claimUploadRole({ secret: handoff.secret, episodeId: "episode-1", role: "video" }, { store, now })).resolves.toMatchObject({ fullRole: "video" });
     await expect(claimUploadRole({ secret: handoff.secret, episodeId: "episode-1", role: "audio" }, { store, now })).rejects.toThrow("UPLOAD_ROLE_ALREADY_CLAIMED");
     await expect(claimUploadRole({ secret: handoff.secret, episodeId: "episode-1", role: "teaser" }, { store, now })).resolves.toBeTruthy();
