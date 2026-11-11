@@ -9,7 +9,7 @@ export async function getCatalog() {
   const categoryRows = await db.select().from(categories).where(isNull(categories.deletedAt)).orderBy(asc(categories.sortOrder), asc(categories.name));
   const episodeRows = await db.select().from(episodes).where(and(eq(episodes.status, "published"), isNull(episodes.deletedAt))).orderBy(desc(episodes.publishedAt));
   const mediaRows = episodeRows.length
-    ? await db.select({ id: mediaVariants.id, episodeId: mediaVariants.episodeId, kind: mediaVariants.kind, mimeType: mediaVariants.mimeType }).from(mediaVariants).where(and(inArray(mediaVariants.episodeId, episodeRows.map((episode) => episode.id)), inArray(mediaVariants.kind, ["audio", "video", "teaser"]), isNull(mediaVariants.deletedAt)))
+    ? await db.select({ id: mediaVariants.id, episodeId: mediaVariants.episodeId, kind: mediaVariants.kind, mimeType: mediaVariants.mimeType, createdAt: mediaVariants.createdAt }).from(mediaVariants).where(and(inArray(mediaVariants.episodeId, episodeRows.map((episode) => episode.id)), inArray(mediaVariants.kind, ["audio", "video", "teaser"]), isNull(mediaVariants.deletedAt)))
     : [];
   const episodeIdsWithMedia = new Set(mediaRows.map((media) => media.episodeId));
   const previewRows = mediaRows.filter((media): media is typeof media & { kind: "audio" | "video" | "teaser" } => media.kind === "audio" || media.kind === "video" || media.kind === "teaser");
@@ -19,7 +19,7 @@ export async function getCatalog() {
 export async function getEpisodeBySlug(slug: string) {
   if (!process.env.CONTENT_DATABASE_URL) { for (const category of sampleCatalog) { const episode = category.episodes.find((item) => item.slug === slug); if (episode) return { episode, category, media: [] }; } return null; }
   const db = createContentDb(); const [episode] = await db.select().from(episodes).where(and(eq(episodes.slug, slug), eq(episodes.status, "published"), isNull(episodes.deletedAt))).limit(1); if (!episode) return null;
-  const [category] = await db.select().from(categories).where(eq(categories.id, episode.categoryId)).limit(1); const media = await db.select().from(mediaVariants).where(and(eq(mediaVariants.episodeId, episode.id), isNull(mediaVariants.deletedAt))); return { episode, category, media };
+  const [category] = await db.select().from(categories).where(eq(categories.id, episode.categoryId)).limit(1); const media = await db.select().from(mediaVariants).where(and(eq(mediaVariants.episodeId, episode.id), isNull(mediaVariants.deletedAt))).orderBy(desc(mediaVariants.createdAt)); return { episode, category, media };
 }
 
 const now = new Date();
