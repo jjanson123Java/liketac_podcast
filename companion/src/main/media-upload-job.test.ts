@@ -70,4 +70,29 @@ describe("Companion media upload job", () => {
     expect(upload.mock.calls.map(([input]) => input.role)).toEqual(["video", "teaser", "teaser"]);
     expect(job.publicStatus().phase).toBe("complete");
   });
+
+  test("aborts an active full upload and never starts the preview", async () => {
+    const upload = vi.fn(async ({ signal }: { signal: AbortSignal }) => new Promise<void>((_resolve, reject) => signal.addEventListener("abort", () => reject(new Error("upload aborted")))));
+    const deps = dependencies({ upload });
+    const job = new MediaUploadJob(launch, deps as any);
+    const running = job.start();
+    await vi.waitFor(() => expect(upload).toHaveBeenCalledOnce());
+    await job.cancel();
+    await expect(running).rejects.toThrow("upload aborted");
+    expect(upload).toHaveBeenCalledOnce();
+    expect(job.publicStatus().phase).toBe("cancelled");
+  });
+
+  test("aborts an active preview upload without leaving cancelled state", async () => {
+    const upload = vi.fn()
+      .mockResolvedValueOnce(undefined)
+      .mockImplementationOnce(async ({ signal }: { signal: AbortSignal }) => new Promise<void>((_resolve, reject) => signal.addEventListener("abort", () => reject(new Error("preview aborted")))));
+    const deps = dependencies({ upload });
+    const job = new MediaUploadJob(launch, deps as any);
+    const running = job.start();
+    await vi.waitFor(() => expect(upload).toHaveBeenCalledTimes(2));
+    await job.cancel();
+    await expect(running).rejects.toThrow("preview aborted");
+    expect(job.publicStatus().phase).toBe("cancelled");
+  });
 });

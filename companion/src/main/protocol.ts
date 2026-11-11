@@ -11,7 +11,7 @@ export function parseCompanionLaunch(input: string): CompanionLaunchAction | nul
   } catch { return null; }
 }
 
-export function parseUploadLaunch(input: string): UploadLaunch | null {
+export function parseUploadLaunch(input: string, options: { allowLocalDevelopment?: boolean } = {}): UploadLaunch | null {
   try {
     const url = new URL(input);
     if (url.protocol.toLowerCase() !== "liketac:" || url.hostname.toLowerCase() !== "prepare-upload" || url.pathname !== "" || url.hash || url.username || url.password || url.port) return null;
@@ -21,7 +21,7 @@ export function parseUploadLaunch(input: string): UploadLaunch | null {
     const trustedLocal = origin.protocol === "http:" && ["localhost", "127.0.0.1"].includes(origin.hostname);
     const episodeId = url.searchParams.get("episodeId") ?? "";
     const secret = url.searchParams.get("secret") ?? "";
-    if ((!trustedProduction && !trustedLocal) || origin.pathname !== "/" || origin.search || origin.hash) return null;
+    if ((!trustedProduction && !(options.allowLocalDevelopment && trustedLocal)) || origin.pathname !== "/" || origin.search || origin.hash) return null;
     if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(episodeId)) return null;
     if (!/^[A-Za-z0-9_-]{32,128}$/.test(secret)) return null;
     return { origin: origin.origin, episodeId, secret };

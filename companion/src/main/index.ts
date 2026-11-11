@@ -23,7 +23,8 @@ import { upload } from "@vercel/blob/client";
 let mainWindow: BrowserWindow | null = null;
 let service: CompanionApplication;
 let allowClose = false;
-let pendingUploadLaunch: UploadLaunch | null = process.argv.map(parseUploadLaunch).find(Boolean) ?? null;
+const parseRuntimeUploadLaunch = (value: string) => parseUploadLaunch(value, { allowLocalDevelopment: !app.isPackaged });
+let pendingUploadLaunch: UploadLaunch | null = process.argv.map(parseRuntimeUploadLaunch).find(Boolean) ?? null;
 
 function broadcastStatus() {
   mainWindow?.webContents.send("companion:status", service.status());
@@ -39,15 +40,16 @@ function installUploadJob(launch: UploadLaunch) {
     makeTempDirectory: () => mkdtemp(join(tmpdir(), "liketac-preview-")),
     probe: (sourcePath) => probeMedia(sourcePath),
     generate: (input) => generatePreview(input),
-    upload: async ({ origin, episodeId, secret, role, sourcePath, originalFilename, onProgress }) => {
+    upload: async ({ origin, episodeId, secret, role, attemptId, sourcePath, originalFilename, signal, onProgress }) => {
       const safeName = originalFilename.replace(/[^A-Za-z0-9._-]/g, "-");
       const body = await openAsBlob(sourcePath);
       await upload(`episodes/${episodeId}/${role}-${safeName}`, body, {
         access: "private",
         handleUploadUrl: `${origin}/api/admin/podcasts/upload`,
         headers: { authorization: `Bearer ${secret}` },
-        clientPayload: JSON.stringify({ episodeId, role, originalFilename }),
+        clientPayload: JSON.stringify({ episodeId, role, originalFilename, attemptId }),
         multipart: body.size > 50_000_000,
+        abortSignal: signal,
         onUploadProgress: ({ percentage }) => onProgress(Math.round(percentage)),
       });
     },
@@ -145,7 +147,7 @@ if (!app.requestSingleInstanceLock()) app.quit();
 else {
   app.setAsDefaultProtocolClient("liketac");
   app.on("second-instance", (_event, argv) => {
-    const uploadLaunch = argv.map(parseUploadLaunch).find(Boolean);
+    const uploadLaunch = argv.map(parseRuntimeUploadLaunch).find(Boolean);
     if (!uploadLaunch && !argv.some((value) => parseCompanionLaunch(value) === "recording")) return;
     if (!mainWindow) mainWindow = createWindow();
     if (mainWindow.isMinimized()) mainWindow.restore();
@@ -154,7 +156,7 @@ else {
   });
   void app.whenReady().then(() => {
     const protocolArguments = process.argv.filter((value) => value.toLowerCase().startsWith("liketac:"));
-    if (protocolArguments.length && !protocolArguments.some((value) => parseCompanionLaunch(value) === "recording" || parseUploadLaunch(value))) {
+    if (protocolArguments.length && !protocolArguments.some((value) => parseCompanionLaunch(value) === "recording" || parseRuntimeUploadLaunch(value))) {
       app.quit();
       return;
     }

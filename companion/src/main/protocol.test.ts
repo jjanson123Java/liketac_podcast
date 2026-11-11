@@ -28,6 +28,12 @@ describe("Like TAC protocol security", () => {
     "liketac://prepare-upload/extra?origin=https%3A%2F%2Fliketac.live&episodeId=86420552-d588-449f-a5ba-3ecac12bf373&secret=abcdefghijklmnopqrstuvwxyzABCDEFGH123456",
   ])("rejects an unsafe upload launch: %s", (url) => expect(parseUploadLaunch(url)).toBeNull());
 
+  test("allows localhost only when an unpackaged development runtime opts in", () => {
+    const local = "liketac://prepare-upload?origin=http%3A%2F%2F127.0.0.1%3A3100&episodeId=86420552-d588-449f-a5ba-3ecac12bf373&secret=abcdefghijklmnopqrstuvwxyzABCDEFGH123456";
+    expect(parseUploadLaunch(local)).toBeNull();
+    expect(parseUploadLaunch(local, { allowLocalDevelopment: true })).toMatchObject({ origin: "http://127.0.0.1:3100" });
+  });
+
   test("allows only the packaged renderer URL", () => {
     const packaged = "file:///C:/Program%20Files/Like%20TAC%20Companion/resources/app/renderer/index.html";
     expect(allowedRendererNavigation(packaged, packaged)).toBe(true);

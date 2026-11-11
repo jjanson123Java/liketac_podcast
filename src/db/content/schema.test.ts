@@ -27,6 +27,7 @@ describe("content database schema", () => {
       expect.arrayContaining(["episode_id", "kind", "object_key", "mime_type", "duration_seconds"]),
     );
     expect(columns).not.toContain("media_bytes");
+    expect(getTableConfig(mediaVariants).columns.find((column) => column.name === "byte_size")?.getSQLType()).toBe("bigint");
   });
 
   it("stores only hashed short-lived Companion upload credentials", () => {
@@ -36,7 +37,9 @@ describe("content database schema", () => {
       "admin_user_id",
       "secret_hash",
       "expires_at",
+      "full_attempt_id",
       "full_claimed_at",
+      "teaser_attempt_id",
       "teaser_claimed_at",
       "cancelled_at",
     ]));

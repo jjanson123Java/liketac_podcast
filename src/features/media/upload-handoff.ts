@@ -14,9 +14,11 @@ export type UploadHandoffRecord = {
   adminUserId: string;
   secretHash: string;
   fullRole: "video" | "audio" | null;
+  fullAttemptId: string | null;
   fullClaimedAt: Date | null;
   fullCompletedAt: Date | null;
   teaserClaimedAt: Date | null;
+  teaserAttemptId: string | null;
   teaserCompletedAt: Date | null;
   expiresAt: Date;
   cancelledAt: Date | null;
@@ -27,7 +29,7 @@ export type UploadHandoffStore = {
   create(record: UploadHandoffRecord): Promise<void>;
   findBySecretHash(secretHash: string): Promise<UploadHandoffRecord | null>;
   findById(id: string): Promise<UploadHandoffRecord | null>;
-  claim(id: string, role: UploadHandoffRole, now: Date): Promise<UploadHandoffRecord | null>;
+  claim(id: string, role: UploadHandoffRole, attemptId: string, now: Date): Promise<UploadHandoffRecord | null>;
   complete(id: string, role: UploadHandoffRole, now: Date): Promise<UploadHandoffRecord | null>;
   cancel(id: string, adminUserId: string, now: Date): Promise<UploadHandoffRecord | null>;
 };
@@ -61,15 +63,15 @@ export const contentUploadHandoffStore: UploadHandoffStore = {
     const [row] = await createContentDb().select().from(companionUploadHandoffs).where(eq(companionUploadHandoffs.id, id)).limit(1);
     return row ? asRecord(row) : null;
   },
-  async claim(id, role, now) {
+  async claim(id, role, attemptId, now) {
     const available = and(
       eq(companionUploadHandoffs.id, id),
       gt(companionUploadHandoffs.expiresAt, now),
       isNull(companionUploadHandoffs.cancelledAt),
     );
     const values = role === "teaser"
-      ? { teaserClaimedAt: now }
-      : { fullRole: role, fullClaimedAt: now };
+      ? { teaserClaimedAt: now, teaserAttemptId: attemptId }
+      : { fullRole: role, fullClaimedAt: now, fullAttemptId: attemptId };
     const unclaimed = role === "teaser"
       ? and(available, isNull(companionUploadHandoffs.teaserClaimedAt), isNull(companionUploadHandoffs.teaserCompletedAt))
       : and(available, isNull(companionUploadHandoffs.fullRole), isNull(companionUploadHandoffs.fullClaimedAt), isNull(companionUploadHandoffs.fullCompletedAt));
@@ -106,9 +108,11 @@ export async function createUploadHandoff(
     adminUserId: input.adminUserId,
     secretHash: hashUploadHandoffSecret(secret),
     fullRole: null,
+    fullAttemptId: null,
     fullClaimedAt: null,
     fullCompletedAt: null,
     teaserClaimedAt: null,
+    teaserAttemptId: null,
     teaserCompletedAt: null,
     expiresAt: new Date(now.getTime() + UPLOAD_HANDOFF_LIFETIME_MS),
     cancelledAt: null,
@@ -131,14 +135,17 @@ async function findBoundHandoff(
 }
 
 export async function claimUploadRole(
-  input: { secret: string; episodeId: string; role: UploadHandoffRole },
+  input: { secret: string; episodeId: string; role: UploadHandoffRole; attemptId: string },
   dependencies: Dependencies = {},
 ) {
   const { record, store, now } = await findBoundHandoff(input, dependencies);
   if (input.role === "teaser" && !record.fullRole) throw new Error("UPLOAD_FULL_ROLE_REQUIRED");
   if (input.role === "teaser" ? record.teaserCompletedAt : record.fullCompletedAt) throw new Error("UPLOAD_ROLE_ALREADY_COMPLETED");
-  if (input.role === "teaser" ? record.teaserClaimedAt : record.fullClaimedAt) throw new Error("UPLOAD_ROLE_ALREADY_CLAIMED");
-  const claimed = await store.claim(record.id, input.role, now);
+  const claimedAt = input.role === "teaser" ? record.teaserClaimedAt : record.fullClaimedAt;
+  const claimedAttemptId = input.role === "teaser" ? record.teaserAttemptId : record.fullAttemptId;
+  if (claimedAt && claimedAttemptId === input.attemptId) return record;
+  if (claimedAt) throw new Error("UPLOAD_ROLE_ALREADY_CLAIMED");
+  const claimed = await store.claim(record.id, input.role, input.attemptId, now);
   if (!claimed) throw new Error("UPLOAD_ROLE_ALREADY_CLAIMED");
   return claimed;
 }

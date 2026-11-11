@@ -4,7 +4,7 @@ import { categories, episodes, mediaVariants } from "@/db/content/schema";
 import { catalogPreviewKind, selectCatalogPreview } from "./catalog-preview";
 
 export async function getCatalog() {
-  if (!process.env.CONTENT_DATABASE_URL) return sampleCatalog;
+  if (!process.env.CONTENT_DATABASE_URL) return sampleCatalog.map((category) => ({ ...category, episodes: category.episodes.map((episode) => ({ ...episode, hasFullMedia: episode.hasMedia })) }));
   const db = createContentDb();
   const categoryRows = await db.select().from(categories).where(isNull(categories.deletedAt)).orderBy(asc(categories.sortOrder), asc(categories.name));
   const episodeRows = await db.select().from(episodes).where(and(eq(episodes.status, "published"), isNull(episodes.deletedAt))).orderBy(desc(episodes.publishedAt));
@@ -12,8 +12,9 @@ export async function getCatalog() {
     ? await db.select({ id: mediaVariants.id, episodeId: mediaVariants.episodeId, kind: mediaVariants.kind, mimeType: mediaVariants.mimeType, createdAt: mediaVariants.createdAt }).from(mediaVariants).where(and(inArray(mediaVariants.episodeId, episodeRows.map((episode) => episode.id)), inArray(mediaVariants.kind, ["audio", "video", "teaser"]), isNull(mediaVariants.deletedAt)))
     : [];
   const episodeIdsWithMedia = new Set(mediaRows.map((media) => media.episodeId));
+  const episodeIdsWithFullMedia = new Set(mediaRows.filter((media) => media.kind === "audio" || media.kind === "video").map((media) => media.episodeId));
   const previewRows = mediaRows.filter((media): media is typeof media & { kind: "audio" | "video" | "teaser" } => media.kind === "audio" || media.kind === "video" || media.kind === "teaser");
-  return categoryRows.map((category) => ({ ...category, episodes: episodeRows.filter((episode) => episode.categoryId === category.id).map((episode) => { const preview = selectCatalogPreview(episode, previewRows); return { ...episode, hasMedia: episodeIdsWithMedia.has(episode.id), previewMediaId: preview?.id ?? null, previewMediaKind: catalogPreviewKind(preview?.mimeType) }; }) }));
+  return categoryRows.map((category) => ({ ...category, episodes: episodeRows.filter((episode) => episode.categoryId === category.id).map((episode) => { const preview = selectCatalogPreview(episode, previewRows); return { ...episode, hasMedia: episodeIdsWithMedia.has(episode.id), hasFullMedia: episodeIdsWithFullMedia.has(episode.id), previewMediaId: preview?.id ?? null, previewMediaKind: catalogPreviewKind(preview?.mimeType) }; }) }));
 }
 
 export async function getEpisodeBySlug(slug: string) {

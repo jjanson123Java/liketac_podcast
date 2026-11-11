@@ -15,6 +15,13 @@
       "when": 1794403067974,
       "tag": "0001_companion_upload_handoffs",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794406141684,
+      "tag": "0002_retryable_upload_attempts",
+      "breakpoints": true
     }
   ]
 }

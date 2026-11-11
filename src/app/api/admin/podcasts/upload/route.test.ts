@@ -41,7 +41,7 @@ function request(headers?: HeadersInit) {
 }
 
 function payload(role: string, episodeId = "episode-1") {
-  return JSON.stringify({ episodeId, role, originalFilename: `recording.${role === "audio" ? "m4a" : "mp4"}` });
+  return JSON.stringify({ episodeId, role, originalFilename: `recording.${role === "audio" ? "m4a" : "mp4"}`, attemptId: "d9401ce3-cb21-4a57-a719-f88c383a0101" });
 }
 
 beforeEach(() => {
@@ -76,7 +76,7 @@ describe("private podcast Blob upload", () => {
     });
     const response = await POST(request({ authorization: "Bearer handoff-secret" }));
     expect(response.status).toBe(200);
-    expect(claimUploadRoleMock).toHaveBeenCalledWith({ secret: "handoff-secret", episodeId: "episode-1", role: "video" });
+    expect(claimUploadRoleMock).toHaveBeenCalledWith({ secret: "handoff-secret", episodeId: "episode-1", role: "video", attemptId: "d9401ce3-cb21-4a57-a719-f88c383a0101" });
   });
 
   test("rejects Companion upload without a valid handoff", async () => {

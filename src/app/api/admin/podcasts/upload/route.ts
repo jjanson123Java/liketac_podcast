@@ -10,7 +10,7 @@ import { episodeExists } from "@/features/media/episode-exists";
 import { claimUploadRole, completeClaimedUploadRole } from "@/features/media/upload-handoff";
 import { uploadPolicy, validateUpload, type UploadRole } from "@/features/media/upload";
 
-type ClientPayload = { episodeId: string; role: UploadRole; originalFilename: string };
+type ClientPayload = { episodeId: string; role: UploadRole; originalFilename: string; attemptId?: string };
 type TokenPayload = ClientPayload & { adminUserId?: string; handoffId?: string };
 
 export async function POST(request: Request) {
@@ -32,8 +32,8 @@ export async function POST(request: Request) {
         } catch {
           if (!isCompanionRole(payload.role)) throw new Error("Invalid upload authorization");
           const secret = bearerSecret(request);
-          if (!secret) throw new Error("Invalid upload authorization");
-          const handoff = await claimUploadRole({ secret, episodeId: payload.episodeId, role: payload.role });
+          if (!secret || !payload.attemptId) throw new Error("Invalid upload authorization");
+          const handoff = await claimUploadRole({ secret, episodeId: payload.episodeId, role: payload.role, attemptId: payload.attemptId });
           tokenPayload = { ...payload, handoffId: handoff.id };
           validUntil = handoff.expiresAt.getTime();
           if (payload.role === "teaser") {
@@ -83,7 +83,7 @@ function isCompanionRole(role: UploadRole): role is "audio" | "video" | "teaser"
 function parseClientPayload(value: string | null): ClientPayload {
   if (!value) throw new Error("Missing upload data");
   const payload = JSON.parse(value) as Partial<ClientPayload>;
-  if (typeof payload.episodeId !== "string" || typeof payload.originalFilename !== "string" || !isUploadRole(payload.role)) throw new Error("Invalid upload data");
+  if (typeof payload.episodeId !== "string" || typeof payload.originalFilename !== "string" || !isUploadRole(payload.role) || (payload.attemptId !== undefined && !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(payload.attemptId))) throw new Error("Invalid upload data");
   return payload as ClientPayload;
 }
 

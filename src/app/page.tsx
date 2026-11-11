@@ -21,7 +21,7 @@ export function getLandingAction(
     .sort((left, right) => (right.publishedAt?.getTime() ?? 0) - (left.publishedAt?.getTime() ?? 0));
 
   if (session?.role === "subscriber" && session.status === "active") {
-    const latestEpisode = publishedEpisodes[0];
+    const latestEpisode = publishedEpisodes.find((episode) => episode.hasFullMedia);
     return latestEpisode
       ? { href: `/shows/${latestEpisode.slug}`, label: "Play Latest Episode" }
       : { href: "/shows", label: "Browse All Shows" };

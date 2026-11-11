@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest";
 
 import {
   cancelUploadHandoff,
-  claimUploadRole,
+  claimUploadRole as claimUploadRoleWithAttempt,
   completeUploadRole,
   createUploadHandoff,
   hashUploadHandoffSecret,
@@ -18,15 +18,17 @@ function memoryStore() {
       return [...rows.values()].find((row) => row.secretHash === secretHash) ?? null;
     },
     async findById(id) { return rows.get(id) ?? null; },
-    async claim(id, role, now) {
+    async claim(id, role, attemptId, now) {
       const row = rows.get(id);
       if (!row || row.cancelledAt || row.expiresAt <= now) return null;
       if (role === "teaser") {
         if (row.teaserClaimedAt || row.teaserCompletedAt) return null;
         row.teaserClaimedAt = now;
+        row.teaserAttemptId = attemptId;
       } else {
         if (row.fullClaimedAt || row.fullCompletedAt) return null;
         row.fullRole = role;
+        row.fullAttemptId = attemptId;
         row.fullClaimedAt = now;
       }
       return row;
@@ -51,6 +53,10 @@ function memoryStore() {
     },
   };
   return { rows, store };
+}
+
+function claimUploadRole(input: { secret: string; episodeId: string; role: "video" | "audio" | "teaser" }, dependencies: Parameters<typeof claimUploadRoleWithAttempt>[1]) {
+  return claimUploadRoleWithAttempt({ ...input, attemptId: crypto.randomUUID() }, dependencies);
 }
 
 describe("Companion upload handoffs", () => {
@@ -114,5 +120,14 @@ describe("Companion upload handoffs", () => {
     ]);
     expect(results.filter((result) => result.status === "fulfilled")).toHaveLength(1);
     expect(results.filter((result) => result.status === "rejected")).toHaveLength(1);
+  });
+
+  test("allows the same upload attempt to request a replacement token after interruption", async () => {
+    const { store } = memoryStore();
+    const now = new Date("2026-11-11T12:00:00Z");
+    const handoff = await createUploadHandoff({ episodeId: "episode-1", adminUserId: "admin-1" }, { store, now });
+    const input = { secret: handoff.secret, episodeId: "episode-1", role: "video" as const, attemptId: crypto.randomUUID() };
+    await expect(claimUploadRoleWithAttempt(input, { store, now })).resolves.toBeTruthy();
+    await expect(claimUploadRoleWithAttempt(input, { store, now })).resolves.toBeTruthy();
   });
 });

@@ -10,8 +10,8 @@ vi.mock("@/features/auth/session", () => ({ getSession: () => getSessionMock() }
 vi.mock("@/features/media/catalog", () => ({ getCatalog: () => getCatalogMock() }));
 
 const episodes = [
-  { id: "start", slug: "tech-at-lunch", title: "Start Here", isStartHere: true, accessLevel: "subscriber", status: "published", publishedAt: new Date("2026-01-01") },
-  { id: "latest", slug: "latest-ai", title: "Latest AI", isStartHere: false, accessLevel: "subscriber", status: "published", publishedAt: new Date("2026-02-01") },
+  { id: "start", slug: "tech-at-lunch", title: "Start Here", isStartHere: true, accessLevel: "subscriber", status: "published", publishedAt: new Date("2026-01-01"), hasFullMedia: true },
+  { id: "latest", slug: "latest-ai", title: "Latest AI", isStartHere: false, accessLevel: "subscriber", status: "published", publishedAt: new Date("2026-02-01"), hasFullMedia: true },
 ];
 
 beforeEach(() => {
@@ -30,6 +30,13 @@ describe("Like TAC landing page", () => {
     getSessionMock.mockResolvedValue({ role: "subscriber", status: "active" });
     render(await HomePage());
     expect(screen.getByRole("link", { name: "Play Latest Episode" })).toHaveAttribute("href", "/shows/latest-ai");
+  });
+
+  test("skips a newer published episode that has no playable full media", async () => {
+    getSessionMock.mockResolvedValue({ role: "subscriber", status: "active" });
+    getCatalogMock.mockResolvedValue([{ id: "category", episodes: [{ ...episodes[1], hasFullMedia: false }, episodes[0]] }]);
+    render(await HomePage());
+    expect(screen.getByRole("link", { name: "Play Latest Episode" })).toHaveAttribute("href", "/shows/tech-at-lunch");
   });
 
   test("directs an administrator to the dashboard", async () => {
