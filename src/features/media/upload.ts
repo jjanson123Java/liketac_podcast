@@ -16,3 +16,7 @@ export function validateUpload(file: { pathname: string; contentType: string; si
 }
 
 export function uploadPolicy(role: UploadRole) { return policies[role]; }
+
+export function hasPublishableFullMedia(media: Array<{ kind: UploadRole }>) {
+  return media.some((item) => item.kind === "audio" || item.kind === "video");
+}

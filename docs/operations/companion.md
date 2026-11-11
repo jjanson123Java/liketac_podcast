@@ -18,6 +18,14 @@ Sign in as the administrator at `liketac.live`, open **Admin Dashboard → Recor
 
 Before recording, confirm the required profile and collection, microphone level, camera previews, presentation preview, and Like TAC media previews. Disconnected devices remain disabled. A missing media path can be repaired from the bundled assets only after explicit confirmation.
 
+## One-file episode upload
+
+From **Admin Dashboard → Podcast Content**, select **Prepare and upload with Like TAC Companion** for the intended draft. The website creates a hashed, one-time handoff that expires after ten minutes; no Blob, Neon, web-session, or OBS credential is sent to Companion.
+
+Choose the completed recording once. Companion uses the Windows FFmpeg and FFprobe installation to inspect it and create exactly the first 45 seconds, including the Like TAC opener. Video uses NVIDIA NVENC when available and falls back to CPU H.264; audio-only input produces an audio preview. RunPod and the A40 are not used and incur no credits.
+
+Companion uploads the full private recording first and then the generated preview. The original remains untouched. Cancel removes temporary output. If preview upload fails after the full upload succeeds, Retry regenerates and sends only the preview. An expired handoff requires a new launch from the administrator page.
+
 ## Backup and restore
 
 Keep the private OBS profile and scene-collection exports outside GitHub. After a damaging OBS change, import the saved `LikeTACLive` profile and `LikeTACLive Studio` collection, restart OBS, and rerun Companion readiness.
@@ -29,4 +37,7 @@ Keep the private OBS profile and scene-collection exports outside GitHub. After 
 - **Authentication failed:** copy the password from OBS WebSocket Server Settings into Companion; do not send it to the website.
 - **Wrong configuration:** stop any active recording/stream, then use the controlled relaunch.
 - **Missing device:** reconnect it in Windows, confirm its driver, then rerun the explicit device check.
+- **Upload handoff expired:** return to Podcast Content and prepare a new ten-minute handoff.
+- **FFmpeg unavailable:** confirm `ffmpeg` and `ffprobe` launch from a new Windows terminal, then restart Companion.
+- **Website-only upload:** the full episode may publish, but protected visitors see a locked branded card until Companion adds the preview.
 

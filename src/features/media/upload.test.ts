@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { validateUpload } from "./upload";
+import { hasPublishableFullMedia, validateUpload } from "./upload";
 
 describe("podcast upload validation", () => {
   it("accepts supported audio, video, teaser, caption, and transcript uploads", () => {
@@ -13,5 +13,12 @@ describe("podcast upload validation", () => {
     expect(validateUpload({ pathname: "../secret.mp4", contentType: "video/mp4", size: 1_000 }, "video")).toContain("The object path is unsafe.");
     expect(validateUpload({ pathname: "episodes/a/video.exe", contentType: "application/octet-stream", size: 1_000 }, "video")).toContain("That file type is not allowed for this media role.");
     expect(validateUpload({ pathname: "episodes/a/video.mp4", contentType: "video/mp4", size: 6_000_000_000 }, "video")).toContain("The file is larger than the allowed limit.");
+  });
+});
+
+describe("episode publication media", () => {
+  it("allows a full-only protected episode to publish as a locked visitor fallback", () => {
+    expect(hasPublishableFullMedia([{ kind: "video" }])).toBe(true);
+    expect(hasPublishableFullMedia([{ kind: "teaser" }])).toBe(false);
   });
 });

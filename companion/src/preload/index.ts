@@ -24,6 +24,9 @@ export function createCompanionAPI(invoke: Invoke, subscribe: Subscribe): Compan
     startRecording: () => invoke("companion:start-recording"),
     stopRecording: () => invoke("companion:stop-recording"),
     setFullScreen: (enabled: boolean) => invoke("companion:set-full-screen", enabled),
+    startMediaUpload: () => invoke("companion:start-media-upload"),
+    retryMediaUpload: () => invoke("companion:retry-media-upload"),
+    cancelMediaUpload: () => invoke("companion:cancel-media-upload"),
     requestClose: (choice) => invoke("companion:request-close", choice),
     onStatus: (listener) => subscribe("companion:status", listener),
   });

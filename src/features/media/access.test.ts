@@ -4,9 +4,9 @@ import { resolveEpisodeAccess } from "./access";
 const subscriber = { role: "subscriber" as const, status: "active" as const };
 
 describe("episode access", () => {
-  it("keeps Start Here, current, and public episodes free", () => {
+  it("keeps Start Here and explicitly public episodes free while protecting Current/New", () => {
     expect(resolveEpisodeAccess({ accessLevel: "subscriber", isStartHere: true, isCurrent: false }, null)).toBe("full");
-    expect(resolveEpisodeAccess({ accessLevel: "subscriber", isStartHere: false, isCurrent: true }, null)).toBe("full");
+    expect(resolveEpisodeAccess({ accessLevel: "subscriber", isStartHere: false, isCurrent: true }, null)).toBe("teaser");
     expect(resolveEpisodeAccess({ accessLevel: "public", isStartHere: false, isCurrent: false }, null)).toBe("full");
   });
 

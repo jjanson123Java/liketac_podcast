@@ -3,6 +3,7 @@ import type { CompanionController } from "./companion-controller";
 
 type CredentialStore = { save(password: string): Promise<void>; load(): Promise<string | null> };
 type Launcher = { discover(): Promise<string | null>; launch(executable: string): unknown; closeLaunched(): Promise<boolean> };
+type MediaUploadJob = { publicStatus(): import("../shared/contracts").MediaUploadStatus; start(): Promise<unknown>; retry(): Promise<unknown>; cancel(): Promise<unknown> };
 
 export class CompanionApplication {
   constructor(
@@ -10,6 +11,14 @@ export class CompanionApplication {
     private readonly credentials: CredentialStore,
     private readonly launcher: Launcher,
   ) {}
+
+  private mediaUploadJob: MediaUploadJob | null = null;
+
+  setMediaUploadJob(job: MediaUploadJob) { this.mediaUploadJob = job; }
+  mediaUploadStatus() { return this.mediaUploadJob?.publicStatus() ?? null; }
+  startMediaUpload() { if (!this.mediaUploadJob) throw new Error("Open the upload from the Like TAC administrator dashboard first."); return this.mediaUploadJob.start(); }
+  retryMediaUpload() { if (!this.mediaUploadJob) throw new Error("No episode upload is ready to retry."); return this.mediaUploadJob.retry(); }
+  cancelMediaUpload() { if (!this.mediaUploadJob) throw new Error("No episode upload is active."); return this.mediaUploadJob.cancel(); }
 
   async connect(password: string) {
     await this.controller.connect({ host: "127.0.0.1", port: 4455, password });
@@ -24,7 +33,11 @@ export class CompanionApplication {
     return this.status();
   }
 
-  status() { return this.controller.status(); }
+  status() {
+    const base = this.controller.status();
+    const mediaUpload = this.mediaUploadStatus();
+    return mediaUpload ? { ...base, mediaUpload } : base;
+  }
   syncStatus() { return this.controller.syncSnapshot(); }
   getProgramPreview() { return this.controller.getProgramPreview(); }
 

@@ -1,5 +1,6 @@
 import {
   boolean,
+  bigint,
   index,
   integer,
   pgEnum,
@@ -47,7 +48,7 @@ export const mediaVariants = pgTable("media_variants", {
   kind: mediaKind("kind").notNull(),
   objectKey: text("object_key").notNull(),
   mimeType: text("mime_type").notNull(),
-  byteSize: integer("byte_size").notNull(),
+  byteSize: bigint("byte_size", { mode: "number" }).notNull(),
   durationSeconds: integer("duration_seconds"),
   originalFilename: text("original_filename"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -55,4 +56,24 @@ export const mediaVariants = pgTable("media_variants", {
 }, (table) => [
   index("media_variants_episode_idx").on(table.episodeId),
   uniqueIndex("media_variants_object_key_idx").on(table.objectKey),
+]);
+
+export const companionUploadHandoffs = pgTable("companion_upload_handoffs", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  episodeId: uuid("episode_id").notNull().references(() => episodes.id),
+  adminUserId: uuid("admin_user_id").notNull(),
+  secretHash: text("secret_hash").notNull().unique(),
+  fullRole: text("full_role"),
+  fullAttemptId: uuid("full_attempt_id"),
+  fullClaimedAt: timestamp("full_claimed_at", { withTimezone: true }),
+  fullCompletedAt: timestamp("full_completed_at", { withTimezone: true }),
+  teaserClaimedAt: timestamp("teaser_claimed_at", { withTimezone: true }),
+  teaserAttemptId: uuid("teaser_attempt_id"),
+  teaserCompletedAt: timestamp("teaser_completed_at", { withTimezone: true }),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index("companion_upload_handoffs_episode_idx").on(table.episodeId),
+  index("companion_upload_handoffs_expiry_idx").on(table.expiresAt),
 ]);

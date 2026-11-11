@@ -53,12 +53,12 @@ export function AdminMediaUpload({ episodeId }: { episodeId: string }) {
 
   return (
     <form onSubmit={submit} className="stackedForm">
+      <p><strong>Website-only fallback:</strong> upload full media here when Companion is unavailable. Subscriber content stays locked for visitors until Companion creates a preview.</p>
       <label>
         Media role
         <select name="role" defaultValue="video" disabled={uploading}>
           <option value="video">Full video</option>
           <option value="audio">Full audio</option>
-          <option value="teaser">45-second teaser</option>
           <option value="captions">Captions</option>
           <option value="transcript">Transcript</option>
         </select>

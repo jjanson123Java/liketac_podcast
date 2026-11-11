@@ -1,6 +1,42 @@
 import Link from "next/link";
+import { getSession } from "@/features/auth/session";
+import { getCatalog } from "@/features/media/catalog";
 
-export default function HomePage() {
+type LandingAction = {
+  href: string;
+  label: string;
+};
+
+export function getLandingAction(
+  session: Awaited<ReturnType<typeof getSession>>,
+  catalog: Awaited<ReturnType<typeof getCatalog>>,
+): LandingAction {
+  if (session?.role === "admin") {
+    return { href: "/admin", label: "Open Admin Dashboard" };
+  }
+
+  const publishedEpisodes = catalog
+    .flatMap((category) => category.episodes)
+    .filter((episode) => episode.status === "published")
+    .sort((left, right) => (right.publishedAt?.getTime() ?? 0) - (left.publishedAt?.getTime() ?? 0));
+
+  if (session?.role === "subscriber" && session.status === "active") {
+    const latestEpisode = publishedEpisodes.find((episode) => episode.hasFullMedia);
+    return latestEpisode
+      ? { href: `/shows/${latestEpisode.slug}`, label: "Play Latest Episode" }
+      : { href: "/shows", label: "Browse All Shows" };
+  }
+
+  const startHereEpisode = publishedEpisodes.find((episode) => episode.isStartHere);
+  return startHereEpisode
+    ? { href: `/shows/${startHereEpisode.slug}`, label: "Start Here — Watch Free" }
+    : { href: "/shows", label: "Browse Free Episodes" };
+}
+
+export default async function HomePage() {
+  const [session, catalog] = await Promise.all([getSession(), getCatalog()]);
+  const primaryAction = getLandingAction(session, catalog);
+
   return (
     <main>
       <section className="hero">
@@ -9,9 +45,10 @@ export default function HomePage() {
           <h1>Serious tech.<br /><span>For the rest of us.</span></h1>
           <p className="heroCopy">Relaxed conversations that turn complicated technology into useful ideas anyone can understand—and maybe laugh at along the way.</p>
           <div className="buttonRow">
-            <Link className="button primary" href="/shows/ai-useful-coworker">Play Latest Episode</Link>
+            <Link className="button primary" href={primaryAction.href}>{primaryAction.label}</Link>
             <Link className="button outlineOnDark" href="/shows">Browse All Shows</Link>
           </div>
+          {!session ? <p className="heroSignIn">Already subscribed? <Link href="/sign-in">Sign in</Link></p> : null}
         </div>
         <article className="featuredEpisode">
           <div className="episodeArtwork" aria-hidden="true"><img src="/brand/studio-cover.svg" alt="" width="720" height="660" /></div>
