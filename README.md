@@ -37,6 +37,13 @@ media controls.
 - Separate Neon identity/security and content/metadata databases
 - Role-aware Help, accessible light/dark themes, and responsive navigation
 
+## Optional social links
+
+Add only confirmed accounts to `src/config/social-links.ts`. Supported services are YouTube, Twitch,
+X / Twitter, Instagram, and Discord. Each entry needs an HTTPS URL and display label. Blank or unsafe
+entries are omitted. The links sit beside the footer brand, wrap when needed, and stack below the brand
+on small screens. Like TAC keeps this list empty until its own accounts are ready to publish.
+
 ## Local verification
 
 ```bash
