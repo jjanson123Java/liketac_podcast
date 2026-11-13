@@ -21,6 +21,23 @@ describe("content database schema", () => {
     );
   });
 
+  it("stores four independent episode classifications with safe false defaults", () => {
+    const classificationColumns = getTableConfig(episodes).columns.filter((column) =>
+      ["is_free_classification", "is_non_technical", "is_beginner", "is_seriously"].includes(column.name),
+    );
+
+    expect(classificationColumns.map((column) => column.name)).toEqual([
+      "is_free_classification",
+      "is_non_technical",
+      "is_beginner",
+      "is_seriously",
+    ]);
+    for (const column of classificationColumns) {
+      expect(column.notNull).toBe(true);
+      expect(column.hasDefault).toBe(true);
+    }
+  });
+
   it("stores only media metadata and object keys", () => {
     const columns = getTableConfig(mediaVariants).columns.map((column) => column.name);
     expect(columns).toEqual(
