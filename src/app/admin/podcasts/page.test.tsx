@@ -25,6 +25,10 @@ const episode = {
   status: "draft",
   deletedAt: null,
   createdAt: new Date("2026-11-13T12:46:26Z"),
+  isFreeClassification: true,
+  isNonTechnical: true,
+  isBeginner: false,
+  isSeriously: false,
 };
 
 describe("administrator episode categories", () => {
@@ -53,5 +57,27 @@ describe("administrator episode categories", () => {
 
     expect(screen.getByRole("combobox", { name: "Categories" })).toBeVisible();
     expect(screen.queryByRole("combobox", { name: "Subject" })).not.toBeInTheDocument();
+  });
+
+  test("classifies new episodes with four independent checkboxes", async () => {
+    render(await PodcastsPage());
+
+    const createForm = screen.getByRole("button", { name: "Save draft" }).closest("form");
+    expect(createForm).not.toBeNull();
+    for (const label of ["Free", "Non-Technical", "Beginner", "Seriously"]) {
+      expect(within(createForm as HTMLElement).getByRole("checkbox", { name: label })).not.toBeChecked();
+    }
+  });
+
+  test("updates the saved classifications on an existing episode", async () => {
+    render(await PodcastsPage());
+
+    const card = screen.getByRole("heading", { name: episode.title }).closest("article");
+    expect(card).not.toBeNull();
+    expect(within(card as HTMLElement).getByRole("checkbox", { name: "Free" })).toBeChecked();
+    expect(within(card as HTMLElement).getByRole("checkbox", { name: "Non-Technical" })).toBeChecked();
+    expect(within(card as HTMLElement).getByRole("checkbox", { name: "Beginner" })).not.toBeChecked();
+    expect(within(card as HTMLElement).getByRole("checkbox", { name: "Seriously" })).not.toBeChecked();
+    expect(within(card as HTMLElement).getByRole("button", { name: "Update classifications" })).toBeVisible();
   });
 });

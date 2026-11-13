@@ -4,6 +4,7 @@ const { db, requireAdminMock, recordAuditMock } = vi.hoisted(() => ({
   db: {
     select: vi.fn(),
     update: vi.fn(),
+    insert: vi.fn(),
   },
   requireAdminMock: vi.fn(),
   recordAuditMock: vi.fn(),
@@ -22,6 +23,17 @@ function moveRequest(categoryId = "22222222-2222-4222-8222-222222222222") {
   form.set("action", "move");
   form.set("id", "11111111-1111-4111-8111-111111111111");
   form.set("categoryId", categoryId);
+  return new Request("https://liketac.live/api/admin/podcasts", { method: "POST", body: form });
+}
+
+function classificationRequest(action: "create" | "classify", selected: string[]) {
+  const form = new FormData();
+  form.set("action", action);
+  form.set("id", "11111111-1111-4111-8111-111111111111");
+  form.set("title", "A classified episode");
+  form.set("categoryId", "22222222-2222-4222-8222-222222222222");
+  form.set("summary", "Useful ideas.");
+  for (const name of selected) form.set(name, "yes");
   return new Request("https://liketac.live/api/admin/podcasts", { method: "POST", body: form });
 }
 
@@ -63,5 +75,44 @@ describe("moving an existing podcast episode", () => {
     await expect(response.json()).resolves.toEqual({ error: "Choose an active category." });
     expect(db.update).not.toHaveBeenCalled();
     expect(recordAuditMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("classifying podcast episodes", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    requireAdminMock.mockResolvedValue({ userId: "admin-1" });
+  });
+
+  test("stores all classifications selected while creating an episode", async () => {
+    const values = vi.fn().mockResolvedValue(undefined);
+    db.insert.mockReturnValue({ values });
+
+    const response = await POST(classificationRequest("create", ["isFreeClassification", "isBeginner"]));
+
+    expect(response.status).toBe(303);
+    expect(values).toHaveBeenCalledWith(expect.objectContaining({
+      isFreeClassification: true,
+      isNonTechnical: false,
+      isBeginner: true,
+      isSeriously: false,
+    }));
+  });
+
+  test("replaces existing classifications without changing episode access or category", async () => {
+    const where = vi.fn().mockResolvedValue(undefined);
+    const set = vi.fn(() => ({ where }));
+    db.update.mockReturnValue({ set });
+
+    const response = await POST(classificationRequest("classify", ["isNonTechnical", "isSeriously"]));
+
+    expect(response.status).toBe(303);
+    expect(set).toHaveBeenCalledWith({
+      isFreeClassification: false,
+      isNonTechnical: true,
+      isBeginner: false,
+      isSeriously: true,
+      updatedAt: expect.any(Date),
+    });
   });
 });
