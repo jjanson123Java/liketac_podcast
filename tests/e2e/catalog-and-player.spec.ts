@@ -13,7 +13,12 @@ test("visitor landing directs to Start Here and protects subscriber episodes", a
   await expect(page.getByText("New Episode", { exact: true })).toBeVisible();
   const protectedEpisode = page.getByRole("article").filter({ hasText: "AI: useful coworker or confident liar?" });
   await expect(protectedEpisode.getByText("Preview being prepared")).toBeVisible();
-  await expect(protectedEpisode.getByRole("link", { name: "Subscribe Free to Watch" })).toHaveAttribute("href", "/signup");
+  await protectedEpisode.getByRole("button", { name: /Play AI: useful coworker or confident liar\?/ }).click();
+  const visitorNotice = page.getByRole("dialog", { name: "AI: useful coworker or confident liar? requires membership" });
+  await expect(visitorNotice.getByText(/browsing as a visitor/i)).toBeVisible();
+  await expect(visitorNotice.getByRole("link", { name: "Sign Up Free" })).toHaveAttribute("href", "/signup");
+  await visitorNotice.getByRole("button", { name: "Keep Browsing" }).click();
+  await expect(visitorNotice).toBeHidden();
   await expect(page.getByLabel("Deploying and Configuring Expressway opening reel placeholder")).toHaveAttribute(
     "src",
     "/media/podcast-opener/like-tac-podcast-opener.mp4",
