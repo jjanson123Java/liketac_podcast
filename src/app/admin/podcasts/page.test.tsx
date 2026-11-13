@@ -41,7 +41,7 @@ describe("administrator episode categories", () => {
       .mockReturnValueOnce({ from: () => ({ orderBy: async () => [] }) });
   });
 
-  test("shows the current category as an editable dropdown on each episode card", async () => {
+  test("keeps category and classifications together in one editor on each episode card", async () => {
     render(await PodcastsPage());
 
     const card = screen.getByRole("heading", { name: episode.title }).closest("article");
@@ -49,7 +49,10 @@ describe("administrator episode categories", () => {
     const category = within(card as HTMLElement).getByRole("combobox", { name: "Category" });
     expect(category).toHaveValue("start");
     expect(within(card as HTMLElement).getByRole("option", { name: "AI in Plain English" })).toBeVisible();
-    expect(within(card as HTMLElement).getByRole("button", { name: "Move episode" })).toBeVisible();
+    const editor = category.closest("form");
+    expect(editor).not.toBeNull();
+    expect(within(editor as HTMLElement).getByRole("checkbox", { name: "Free" })).toBeChecked();
+    expect(within(editor as HTMLElement).getByRole("button", { name: "Update category and classifications" })).toBeVisible();
   });
 
   test("labels the new-episode category selector as Categories", async () => {
@@ -78,6 +81,6 @@ describe("administrator episode categories", () => {
     expect(within(card as HTMLElement).getByRole("checkbox", { name: "Non-Technical" })).toBeChecked();
     expect(within(card as HTMLElement).getByRole("checkbox", { name: "Beginner" })).not.toBeChecked();
     expect(within(card as HTMLElement).getByRole("checkbox", { name: "Seriously" })).not.toBeChecked();
-    expect(within(card as HTMLElement).getByRole("button", { name: "Update classifications" })).toBeVisible();
+    expect(within(card as HTMLElement).getByRole("button", { name: "Update category and classifications" })).toBeVisible();
   });
 });

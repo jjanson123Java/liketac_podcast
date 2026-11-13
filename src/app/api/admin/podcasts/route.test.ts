@@ -26,7 +26,7 @@ function moveRequest(categoryId = "22222222-2222-4222-8222-222222222222") {
   return new Request("https://liketac.live/api/admin/podcasts", { method: "POST", body: form });
 }
 
-function classificationRequest(action: "create" | "classify", selected: string[]) {
+function classificationRequest(action: "create" | "classify" | "organize", selected: string[]) {
   const form = new FormData();
   form.set("action", action);
   form.set("id", "11111111-1111-4111-8111-111111111111");
@@ -112,6 +112,27 @@ describe("classifying podcast episodes", () => {
       isNonTechnical: true,
       isBeginner: false,
       isSeriously: true,
+      updatedAt: expect.any(Date),
+    });
+  });
+
+  test("updates category and classifications together from the episode editor", async () => {
+    db.select.mockReturnValue({
+      from: () => ({ where: () => ({ limit: async () => [{ id: "22222222-2222-4222-8222-222222222222" }] }) }),
+    });
+    const where = vi.fn().mockResolvedValue(undefined);
+    const set = vi.fn(() => ({ where }));
+    db.update.mockReturnValue({ set });
+
+    const response = await POST(classificationRequest("organize", ["isFreeClassification", "isNonTechnical"]));
+
+    expect(response.status).toBe(303);
+    expect(set).toHaveBeenCalledWith({
+      categoryId: "22222222-2222-4222-8222-222222222222",
+      isFreeClassification: true,
+      isNonTechnical: true,
+      isBeginner: false,
+      isSeriously: false,
       updatedAt: expect.any(Date),
     });
   });
