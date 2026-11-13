@@ -78,4 +78,12 @@ describe("ShowsCatalog classifications", () => {
     expect(expressway).not.toBeNull();
     expect(within(expressway as HTMLElement).getByText("No episodes in this category match the selected filters.")).toBeVisible();
   });
+
+  test("opens a signup notice when a visitor activates subscriber playback", () => {
+    render(<ShowsCatalog catalog={catalog} isSubscriber={false} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Play Building on the Basics/i }));
+    expect(screen.getByRole("dialog", { name: "Building on the Basics requires membership" })).toBeVisible();
+    expect(screen.getByRole("link", { name: "Sign Up Free" })).toHaveAttribute("href", "/signup");
+  });
 });

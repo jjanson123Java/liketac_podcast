@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, test } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, test, vi } from "vitest";
 
 import { EpisodeCard } from "./episode-card";
 
@@ -51,14 +51,26 @@ describe("EpisodeCard", () => {
   });
 
   test("locks protected visitor content when no generated teaser exists", () => {
-    const { container } = render(<EpisodeCard episode={{ slug: "protected", title: "Protected episode", summary: "Members only", publishedAt: new Date(), isStartHere: false, isCurrent: false, access: "teaser", hasMedia: true, previewMediaId: null }} />);
+    const onLockedPlay = vi.fn();
+    const { container } = render(<EpisodeCard episode={{ slug: "protected", title: "Protected episode", summary: "Members only", publishedAt: new Date(), isStartHere: false, isCurrent: false, access: "teaser", hasMedia: true, previewMediaId: null }} onLockedPlay={onLockedPlay} />);
     expect(container.querySelector("video, audio")).toBeNull();
     expect(screen.getByText(/Preview being prepared/i)).toBeVisible();
-    expect(screen.getByRole("link", { name: "Subscribe Free to Watch" })).toHaveAttribute("href", "/signup");
+    const action = screen.getByRole("button", { name: /Play Protected episode/i });
+    expect(action).toHaveClass("lockedEpisodeAction");
+    fireEvent.click(action);
+    expect(onLockedPlay).toHaveBeenCalledWith("Protected episode");
   });
 
-  test("sends a protected visitor with a teaser to the episode sign-in gate", () => {
-    render(<EpisodeCard episode={{ slug: "protected", title: "Protected episode", summary: "Members only", publishedAt: new Date(), isStartHere: false, isCurrent: false, access: "teaser", hasMedia: true, previewMediaId: "teaser-1" }} />);
-    expect(screen.getByRole("link", { name: "Watch 45-second preview" })).toHaveAttribute("href", "/shows/protected");
+  test("keeps the teaser visible but locks full playback for a visitor", () => {
+    const onLockedPlay = vi.fn();
+    render(<EpisodeCard episode={{ slug: "protected", title: "Protected episode", summary: "Members only", publishedAt: new Date(), isStartHere: false, isCurrent: false, access: "teaser", hasMedia: true, previewMediaId: "teaser-1" }} onLockedPlay={onLockedPlay} />);
+    expect(screen.getByLabelText("Protected episode catalog preview")).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: /Play Protected episode/i }));
+    expect(onLockedPlay).toHaveBeenCalledWith("Protected episode");
+  });
+
+  test("keeps normal episode navigation for an authorized subscriber", () => {
+    render(<EpisodeCard episode={{ slug: "protected", title: "Protected episode", summary: "Members only", publishedAt: new Date(), isStartHere: false, isCurrent: false, access: "full", hasMedia: true, previewMediaId: "teaser-1" }} isSubscriber />);
+    expect(screen.getByRole("link", { name: "Play episode" })).toHaveAttribute("href", "/shows/protected");
   });
 });

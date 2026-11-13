@@ -14,8 +14,9 @@ type EpisodeCardEpisode = {
   previewMediaKind?: "audio" | "video";
 };
 
-export function EpisodeCard({ episode }: { episode: EpisodeCardEpisode }) {
+export function EpisodeCard({ episode, isSubscriber = false, onLockedPlay }: { episode: EpisodeCardEpisode; isSubscriber?: boolean; onLockedPlay?: (episodeTitle: string) => void }) {
   const locked = episode.access === "teaser" && !episode.previewMediaId;
+  const visitorLocked = !isSubscriber && episode.access === "teaser";
   const previewSource = episode.previewMediaId ? `/api/media/${episode.previewMediaId}` : "/media/podcast-opener/like-tac-podcast-opener.mp4";
 
   return <article className="card episodeCard">
@@ -26,6 +27,8 @@ export function EpisodeCard({ episode }: { episode: EpisodeCardEpisode }) {
     <h3>{episode.title}</h3>
     <p>{episode.summary}</p>
     <p><time>{episode.publishedAt?.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }) ?? "Coming soon"}</time></p>
-    <Link className="button primary" href={locked ? "/signup" : `/shows/${episode.slug}`}>{locked ? "Subscribe Free to Watch" : episode.access === "teaser" ? "Watch 45-second preview" : "Play episode"}</Link>
+    {visitorLocked
+      ? <button aria-label={`Play ${episode.title}`} className="button lockedEpisodeAction" onClick={() => onLockedPlay?.(episode.title)} type="button">🔒 Play episode</button>
+      : <Link className="button primary" href={`/shows/${episode.slug}`}>Play episode</Link>}
   </article>;
 }
