@@ -70,6 +70,7 @@ export default async function HomePage() {
           <article className="card">
             <span className="tag">Beginner or nontechnical</span><h3>Learn without being talked down to</h3>
             <p>Explore subjects such as AI through clear explanations, everyday examples, and relaxed conversation.</p>
+            <Link className="button primary" href="/who-its-for">See Who Like TAC Is For</Link>
           </article>
           <article className="card darkCard">
             <span className="tag">Free membership</span><h3>Come back whenever you’re curious</h3>

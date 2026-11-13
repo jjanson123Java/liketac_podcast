@@ -3,6 +3,12 @@ import { describe, expect, test } from "vitest";
 import { SiteHeader } from "./site-header";
 
 describe("SiteHeader authentication controls", () => {
+  test("opens the dedicated audience page", () => {
+    render(<SiteHeader role={null} />);
+
+    expect(screen.getByRole("link", { name: "Who It’s For" })).toHaveAttribute("href", "/who-its-for");
+  });
+
   test("offers sign in and free signup to visitors", () => {
     render(<SiteHeader role={null} />);
 

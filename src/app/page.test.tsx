@@ -58,4 +58,9 @@ describe("Like TAC landing page", () => {
     expect(screen.getByRole("link", { name: /sign up free/i })).toHaveAttribute("href", "/signup");
     expect(screen.queryByText(/start a podcast/i)).not.toBeInTheDocument();
   });
+
+  test("sends curious visitors from the audience card to the full audience page", async () => {
+    render(await HomePage());
+    expect(screen.getByRole("link", { name: "See Who Like TAC Is For" })).toHaveAttribute("href", "/who-its-for");
+  });
 });
